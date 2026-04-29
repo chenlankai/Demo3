@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#3659CF">
+
+        <ImageView
+            android:id="@+id/iconSplashLogo"
+            android:layout_width="73dp"
+            android:layout_height="53dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="341dp"
+            android:src="@drawable/icon_splash_logo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iconBmiPointer"
+            android:layout_width="8dp"
+            android:layout_height="23dp"
+            android:layout_marginStart="64.5dp"
+            android:layout_marginTop="358.5dp"
+            android:src="@drawable/icon_bmi_pointer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iconSplashTraining"
+            android:layout_width="170dp"
+            android:layout_height="70dp"
+            android:layout_marginTop="6dp"
+            android:src="@drawable/icon_splash_training"
+            app:layout_constraintStart_toStartOf="@id/iconSplashLogo"
+            app:layout_constraintTop_toBottomOf="@id/iconSplashLogo" />
+        <ImageView
+            android:src="@drawable/icon_splash_leap"
+            android:layout_width="0dp"
+            android:layout_height="37.68dp"
+            android:layout_marginBottom="44dp"
+            android:layout_marginStart="112.5dp"
+            android:layout_marginEnd="112.5dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>
