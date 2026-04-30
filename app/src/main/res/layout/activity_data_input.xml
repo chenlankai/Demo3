@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="#EAEAEE"
     android:orientation="vertical">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -80,9 +82,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_begin="206dp" />
+            app:layout_constraintGuide_percent="0.5" />
 
-        <TextView
+        <EditText
             android:id="@+id/view1"
             android:layout_width="0dp"
             android:layout_height="68dp"
@@ -93,12 +95,16 @@
             android:gravity="center"
             android:text="145.50"
             android:textSize="30sp"
+
+            android:inputType="numberDecimal"
+            android:maxLength="6"
+
             android:fontFamily="@font/montserrat_extrabold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/guideline_mid"
             app:layout_constraintTop_toBottomOf="@+id/tvTitle1" />
 
-        <TextView
+        <EditText
             android:id="@+id/view11"
             android:layout_width="0dp"
             android:layout_height="68dp"
@@ -109,13 +115,16 @@
             android:gravity="center"
             android:text="170"
             android:textSize="30sp"
+            android:inputType="numberDecimal"
+            android:maxLength="5"
+
             android:fontFamily="@font/montserrat_extrabold"
             app:layout_constraintTop_toBottomOf="@+id/tvTitle1"
             app:layout_constraintStart_toEndOf="@id/guideline_mid"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="20dp" />
 
-        <TextView
+        <EditText
             android:id="@+id/view2"
             android:layout_width="0dp"
             android:layout_height="68dp"
@@ -125,6 +134,10 @@
             android:gravity="center"
             android:text="5'"
             android:textSize="30sp"
+
+            android:inputType="number"
+            android:maxLength="1"
+
             android:fontFamily="@font/montserrat_extrabold"
             app:layout_constraintHorizontal_weight="0.875"
             app:layout_constraintStart_toEndOf="@+id/guideline_mid"
@@ -141,7 +154,7 @@
             app:layout_constraintHorizontal_weight="0.0687"
             app:layout_constraintTop_toBottomOf="@+id/tvTitle1"/>
 
-        <TextView
+        <EditText
             android:id="@+id/view3"
             android:layout_width="0dp"
             android:layout_height="68dp"
@@ -151,6 +164,10 @@
             android:fontFamily="@font/montserrat_extrabold"
             android:gravity="center"
             android:text="10''"
+
+            android:inputType="number"
+            android:maxLength="2"
+
             android:textSize="30sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_weight="1.05625"
@@ -205,6 +222,8 @@
                 android:padding="0dp"
                 android:insetLeft="0dp"
                 android:insetRight="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp" />
 
@@ -220,6 +239,8 @@
                 android:padding="0dp"
                 android:insetLeft="0dp"
                 android:insetRight="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -252,6 +273,8 @@
                 android:padding="0dp"
                 android:insetLeft="0dp"
                 android:insetRight="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp" />
 
@@ -267,6 +290,8 @@
                 android:padding="0dp"
                 android:insetLeft="0dp"
                 android:insetRight="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -357,8 +382,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginTop="16dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_age"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:background="#FFFFFF"
-    android:layout_width="65dp"
+    android:layout_width="60dp"
     android:layout_height="39dp">
 
     <TextView
@@ -10,8 +10,6 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:layout_gravity="center"
-        android:paddingStart="9dp"
-        android:paddingEnd="9dp"
         android:text="25"
         android:textColor="#000000"
         android:textSize="32sp"

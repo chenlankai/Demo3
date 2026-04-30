@@ -1,20 +1,29 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
+import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.transition.TransitionManager
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.PagerSnapHelper
+import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.graphics.toColorInt
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityDataInputBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.AgeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.util.dpToPx
+import bmicalculator.bmi.calculator.weightlosstracker.util.setupMedicalInput
 import bmicalculator.bmi.calculator.weightlosstracker.util.systemBarsTopPadding
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -40,6 +49,20 @@ class DataInputActivity : AppCompatActivity() {
         setupListeners()
         
         updateGenderUI()
+
+        init()
+
+
+    }
+    private fun init(){
+
+        //binding.view1.setupMedicalInput("kg",1f,250f,true,false,6) //kg
+        //binding.view1.setupMedicalInput("lb",2f,551f,true,false,6) // lb
+        //binding.view11.setupMedicalInput("cm",1f,250f,true,false,5) //cm
+        binding.view2.setupMedicalInput("'",1f,8f,false,true,2) //ft
+        binding.view2.setText("1")
+        //binding.view3.setupMedicalInput("''",0f,11f,false,true,2) //in
+
     }
     private fun setupAgeRecyclerView() {
         val ages = (1..120).toList()
@@ -49,7 +72,7 @@ class DataInputActivity : AppCompatActivity() {
         binding.rvAge.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.rvAge.adapter = adapter
         
-        val snapHelper = PagerSnapHelper()
+        val snapHelper = LinearSnapHelper()
         snapHelper.attachToRecyclerView(binding.rvAge)
         
         // 动态设置 Padding 以使 Item 居中
@@ -62,12 +85,12 @@ class DataInputActivity : AppCompatActivity() {
         }
         
         binding.rvAge.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    val centerView = snapHelper.findSnapView(recyclerView.layoutManager)
-                    centerView?.let {
-                        val position = recyclerView.layoutManager?.getPosition(it) ?: 0
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val centerView = snapHelper.findSnapView(recyclerView.layoutManager)
+                centerView?.let {
+                    val position = recyclerView.layoutManager?.getPosition(it) ?: 0
+                    if (position in ages.indices) {
                         selectedAge = ages[position]
                     }
                 }
@@ -88,14 +111,13 @@ class DataInputActivity : AppCompatActivity() {
             if (isChecked) {
                 // 更新数据逻辑
                 when (checkedId) {
-                    binding.btnLb.id -> binding.view1.text = "145.50"
-                    binding.btnKg.id -> binding.view1.text = "66.00"
+                    binding.btnLb.id -> binding.view1.setText("145.50")
+                    binding.btnKg.id -> binding.view1.setText("66.00")
                 }
 
                 for (i in 0 until group.childCount) {
                     val child = group.getChildAt(i)
                     if (child is MaterialButton) {
-                        // 判断当前子按钮是否是被选中的那个
                         updateButtonStyle(child, child.id == checkedId)
                     }
                 }
@@ -110,28 +132,29 @@ class DataInputActivity : AppCompatActivity() {
             if (isChecked) {
                 updateToggleUI(group, checkedId)
                 
-                val constraintSet = ConstraintSet()
-                constraintSet.clone(binding.conLayout)
-                
-                TransitionManager.beginDelayedTransition(binding.conLayout)
+//                val constraintSet = ConstraintSet()
+//                constraintSet.clone(binding.conLayout)
+//
+//                TransitionManager.beginDelayedTransition(binding.conLayout)
                 
                 when (checkedId) {
                     binding.btnFTin.id -> {
                         binding.groupFtIn.visibility = View.VISIBLE
                         binding.groupCm.visibility = View.GONE
-                        constraintSet.setVisibility(binding.groupFtIn.id, ConstraintSet.VISIBLE)
-                        constraintSet.setVisibility(binding.groupCm.id, ConstraintSet.GONE)
+
+//                        constraintSet.setVisibility(binding.groupFtIn.id, ConstraintSet.VISIBLE)
+//                        constraintSet.setVisibility(binding.groupCm.id, ConstraintSet.GONE)
                     }
 
                     binding.btnCM.id -> {
                         binding.groupFtIn.visibility = View.GONE
                         binding.groupCm.visibility = View.VISIBLE
-                        binding.view11.text = "170"
-                        constraintSet.setVisibility(binding.groupFtIn.id, ConstraintSet.GONE)
-                        constraintSet.setVisibility(binding.groupCm.id, ConstraintSet.VISIBLE)
+                        binding.view11.setText("170")
+//                        constraintSet.setVisibility(binding.groupFtIn.id, ConstraintSet.GONE)
+//                        constraintSet.setVisibility(binding.groupCm.id, ConstraintSet.VISIBLE)
                     }
                 }
-                constraintSet.applyTo(binding.conLayout)
+//                constraintSet.applyTo(binding.conLayout)
                 
                 for (i in 0 until group.childCount) {
                     val child = group.getChildAt(i)
@@ -185,11 +208,11 @@ class DataInputActivity : AppCompatActivity() {
     }
 
     private fun setupDateTime() {
-        val dateFormater = SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH)
-        binding.tvData.text = dateFormater.format(Date())
-        
-        val timeFormater = SimpleDateFormat("HH:mm", Locale.ENGLISH)
-        binding.tvAfternoon.text = timeFormater.format(Date())
+//        val dateFormater = SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH)
+//        binding.tvData.text = dateFormater.format(Date())
+//
+//        val timeFormater = SimpleDateFormat("HH:mm", Locale.ENGLISH)
+//        binding.tvAfternoon.text = timeFormater.format(Date())
     }
 
     private fun setupListeners() {
@@ -215,12 +238,11 @@ class DataInputActivity : AppCompatActivity() {
             button.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
             button.setTextColor(Color.BLACK)
             button.alpha = 1.0f
-            button.elevation = 6f
         } else {
             button.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
             button.setTextColor(Color.GRAY)
-            button.alpha = 0.3f
-            button.elevation = 0f
+            button.alpha = 0.5f
         }
     }
+
 }
