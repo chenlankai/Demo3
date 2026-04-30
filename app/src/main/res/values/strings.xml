@@ -118,6 +118,7 @@
 	<string name="phone_memery_low_1">Only %1$sM of space left. Please delete some files to make sure there is at least %2$sM.</string>
 	<string name="today">Today</string>
 	<string name="calculator">Calculator</string>
+	<string name="CALCULATE">CALCULATE</string>
 	<string name="loading">Loading…</string>
 	<string name="log_out_google_account">Logged out of Google account and disconnected from Google Fit.</string>
 	<string name="privacy_policy">Privacy Policy</string>

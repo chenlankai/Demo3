@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityMainBinding
+import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.CalculateActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -76,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             override fun onAnimationStart(animation: Animator) {}
             override fun onAnimationEnd(animation: Animator) {
                 Handler(Looper.getMainLooper()).postDelayed({
-
+                    startActivity(Intent(this@MainActivity, CalculateActivity::class.java))
                 }, 1000)
             }
             override fun onAnimationCancel(animation: Animator) {}
