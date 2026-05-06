@@ -3,8 +3,8 @@ import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.content.Context
-import android.text.Editable
-import android.text.InputFilter
+import android.text.*
+import android.view.MotionEvent
 import android.util.DisplayMetrics
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
@@ -12,7 +12,6 @@ import android.widget.Toast
 import java.util.Locale
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
-import android.text.TextWatcher
 
 fun Context.dp2px(dip: Float) = (dip * displayMetrics.density + 0.5f).toInt()
 
@@ -40,8 +39,6 @@ val Context.displayMetrics: DisplayMetrics
 
 val Context.density : Float
     get() = displayMetrics.density
-
-
 
 
 
@@ -84,88 +81,189 @@ fun View.systemBarsBottomPadding() {
         insets
     }
 }
-
-
 fun EditText.setupMedicalInput(
     unit: String,
     min: Float,
     max: Float,
-    isDecimal: Boolean,
+    decimalDigits: Int,
     showUnitDuringEdit: Boolean,
     maxLen: Int
 ) {
-    // 1. 设置字符长度限制
-    this.filters = arrayOf(InputFilter.LengthFilter(maxLen))
+    require(decimalDigits in 0..2) { "decimalDigits must be 0, 1, or 2" }
 
-    // 2. 焦点监听：处理进入/退出编辑状态
-    this.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
-        if (hasFocus) {
-            // 【进入编辑】
-            val currentText = text.toString()
-            val digits = currentText.replace(unit, "").trim()
-            setText(digits)
-            setSelection(text.length)
-        } else {
+    if (!showUnitDuringEdit) {
+        this.filters = arrayOf(InputFilter.LengthFilter(maxLen))
+        this.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                val rawInput = text.toString().filter { it.isDigit() || it == '.' }
+                val value = if (rawInput.isEmpty()) min else rawInput.toFloatOrNull() ?: min
+                val clamped = value.coerceIn(min, max)
+                val format = when (decimalDigits) {
+                    0 -> "%.0f"
+                    1 -> "%.1f"
+                    else -> "%.2f"
+                }
+                val formatted = String.format(Locale.US, format, clamped)
+                setText(formatted)
+            }
+        }
+        this.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                clearFocus()
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(windowToken, 0)
+                true
+            } else false
+        }
+        return
+    }
 
-            performValidationAndFormat(this, unit, min, max, isDecimal)
+    // --- 实时拦截并纠正光标位置的 SpanWatcher ---
+    val selectionWatcher = object : SpanWatcher {
+        private var isSelecting = false
+        override fun onSpanAdded(text: Spannable?, span: Any?, start: Int, end: Int) {}
+        override fun onSpanRemoved(text: Spannable?, span: Any?, start: Int, end: Int) {}
+        override fun onSpanChanged(text: Spannable?, span: Any?, ostart: Int, oend: Int, nstart: Int, nend: Int) {
+            if (isSelecting || text == null) return
+            if (span === Selection.SELECTION_START || span === Selection.SELECTION_END) {
+                val fullText = text.toString()
+                if (fullText.endsWith(unit)) {
+                    val digitLen = (fullText.length - unit.length).coerceAtLeast(0)
+                    val selStart = Selection.getSelectionStart(text)
+                    val selEnd = Selection.getSelectionEnd(text)
+                    if (selStart > digitLen || selEnd > digitLen) {
+                        isSelecting = true
+                        Selection.setSelection(text, selStart.coerceAtMost(digitLen), selEnd.coerceAtMost(digitLen))
+                        isSelecting = false
+                    }
+                }
+            }
         }
     }
 
-
-    if (showUnitDuringEdit) {
-        this.addTextChangedListener(object : TextWatcher {
-            private var isUpdating = false
-
-            override fun afterTextChanged(s: Editable?) {
-                if (isUpdating) return
-
-                val original = s.toString()
-                val digits = original.filter { it.isDigit() || it == '.' }
-
-                val result = if (digits.isEmpty()) "" else "$digits$unit"
-
-                if (original != result) {
-                    isUpdating = true
-                    setText(result)
-                    setSelection(digits.length)
-                    isUpdating = false
-                }
-            }
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        })
+    fun attachSelectionWatcher() {
+        val s = text as? Spannable ?: return
+        val oldWatcher = getTag(bmicalculator.bmi.calculator.weightlosstracker.R.id.tag_medical_watcher) as? SpanWatcher
+        if (oldWatcher != null) {
+            s.removeSpan(oldWatcher)
+        }
+        s.setSpan(selectionWatcher, 0, s.length, Spanned.SPAN_INCLUSIVE_INCLUSIVE)
+        setTag(bmicalculator.bmi.calculator.weightlosstracker.R.id.tag_medical_watcher, selectionWatcher)
     }
 
-    this.setOnEditorActionListener { _, actionId, _ ->
+    if (text.isNullOrEmpty()) {
+        setText("$min$unit")
+        setSelection(0)
+    } else if (!text.toString().endsWith(unit)) {
+        append(unit)
+    }
+    attachSelectionWatcher()
+
+    filters = arrayOf(InputFilter.LengthFilter(maxLen + unit.length))
+
+    var isUpdating = false
+    addTextChangedListener(object : TextWatcher {
+        override fun afterTextChanged(s: Editable?) {
+            if (isUpdating) return
+
+            val original = s.toString()
+            var digits = if (original.endsWith(unit)) {
+                original.substring(0, original.length - unit.length)
+            } else {
+                original
+            }
+            digits = digits.filter { it.isDigit() || it == '.' }
+            if (digits.count { it == '.' } > 1) {
+                val parts = digits.split('.')
+                digits = parts[0] + "." + parts.drop(1).joinToString("").replace(".", "")
+            }
+            if (decimalDigits == 0 && digits.contains('.')) {
+                digits = digits.substringBefore('.')
+            }
+            if (digits.length > maxLen) {
+                digits = digits.substring(0, maxLen)
+            }
+
+            val newText = if (digits.isEmpty()) unit else "$digits$unit"
+
+            if (original != newText) {
+                isUpdating = true
+                setText(newText)
+                attachSelectionWatcher()
+                setSelection(if (digits.isNotEmpty()) digits.length else 0)
+                isUpdating = false
+            }
+        }
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+    })
+
+
+    setOnTouchListener { v, event ->
+        val et = v as EditText
+        if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
+            val fullText = et.text.toString()
+            if (fullText.endsWith(unit)) {
+                val layout = et.layout
+                if (layout != null) {
+                    val x = event.x - et.totalPaddingLeft + et.scrollX
+                    val y = event.y - et.totalPaddingTop + et.scrollY
+                    val line = layout.getLineForVertical(y.toInt())
+                    val offset = layout.getOffsetForHorizontal(line, x)
+                    val digitLen = (fullText.length - unit.length).coerceAtLeast(0)
+                    
+                    if (offset > digitLen) {
+                        et.requestFocus()
+                        et.setSelection(digitLen)
+                        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.showSoftInput(et, InputMethodManager.SHOW_IMPLICIT)
+                        return@setOnTouchListener true
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+        if (!hasFocus) {
+            val fullText = text.toString()
+            if (!fullText.endsWith(unit)) return@OnFocusChangeListener
+            val numStr = fullText.substring(0, fullText.length - unit.length).trim()
+            if (numStr.isEmpty()) {
+                setText("$min$unit")
+                attachSelectionWatcher()
+                setSelection(0)
+                return@OnFocusChangeListener
+            }
+            var value = (numStr.toFloatOrNull() ?: min).coerceIn(min, max)
+            val formatStr = when (decimalDigits) {
+                0 -> "%.0f"
+                1 -> "%.1f"
+                else -> "%.2f"
+            }
+            val formattedNum = String.format(Locale.US, formatStr, value)
+            val newText = "$formattedNum$unit"
+            if (fullText != newText) {
+                setText(newText)
+                attachSelectionWatcher()
+                setSelection(formattedNum.length)
+            }
+        } else {
+            val fullText = text.toString()
+            if (fullText.endsWith(unit)) {
+                setSelection((fullText.length - unit.length).coerceAtLeast(0))
+            }
+        }
+    }
+
+    setOnEditorActionListener { _, actionId, _ ->
         if (actionId == EditorInfo.IME_ACTION_DONE) {
-            clearFocus() // 触发失去焦点逻辑
-            val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            clearFocus()
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(windowToken, 0)
             true
         } else false
     }
 }
 
-private fun performValidationAndFormat(et: EditText, unit: String, min: Float, max: Float, isDecimal: Boolean) {
-    val rawInput = et.text.toString().filter { it.isDigit() || it == '.' }
-    if (rawInput.isNotEmpty()) {
-        var value = rawInput.toFloatOrNull() ?: min
-
-        // 范围检测
-        if (value < min) {
-            value = min
-            Toast.makeText(et.context, "Minimum is $min", Toast.LENGTH_SHORT).show()
-        } else if (value > max) {
-            value = max
-            Toast.makeText(et.context, "Maximum is $max", Toast.LENGTH_SHORT).show()
-        }
-
-        val finalStr = if (isDecimal) {
-            String.format(Locale.US, "%.2f%s", value, unit)
-        } else {
-            "${value.toInt()}$unit"
-        }
-        et.setText(finalStr)
-    }
-}

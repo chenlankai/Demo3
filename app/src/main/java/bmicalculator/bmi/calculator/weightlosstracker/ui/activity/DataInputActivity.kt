@@ -42,6 +42,7 @@ class DataInputActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.headerLayout.systemBarsTopPadding()
 
+
         setupAgeRecyclerView()
         setupUnitToggles()
         setupGenderSelection()
@@ -55,14 +56,10 @@ class DataInputActivity : AppCompatActivity() {
 
     }
     private fun init(){
-
-        //binding.view1.setupMedicalInput("kg",1f,250f,true,false,6) //kg
-        //binding.view1.setupMedicalInput("lb",2f,551f,true,false,6) // lb
-        //binding.view11.setupMedicalInput("cm",1f,250f,true,false,5) //cm
-        binding.view2.setupMedicalInput("'",1f,8f,false,true,2) //ft
-        binding.view2.setText("1")
-        //binding.view3.setupMedicalInput("''",0f,11f,false,true,2) //in
-
+        binding.view1.setupMedicalInput("kg",1f,250f,2,true,6) //kg
+        binding.view11.setupMedicalInput("cm",1f,250f,1,true,5) //cm
+        binding.view2.setupMedicalInput("'",1f,8f,0,true,2) //ft
+        binding.view3.setupMedicalInput("''",0f,11f,0,true,4) //in
     }
     private fun setupAgeRecyclerView() {
         val ages = (1..120).toList()
@@ -74,14 +71,13 @@ class DataInputActivity : AppCompatActivity() {
         
         val snapHelper = LinearSnapHelper()
         snapHelper.attachToRecyclerView(binding.rvAge)
-        
-        // 动态设置 Padding 以使 Item 居中
+
         binding.rvAge.post {
             val itemWidth = 65.dpToPx(this)
             val padding = (binding.rvAge.width - itemWidth) / 2
             binding.rvAge.setPadding(padding, 0, padding, 0)
             binding.rvAge.clipToPadding = false
-            binding.rvAge.scrollToPosition(24) // 默认 25 岁 (index 24)
+            binding.rvAge.scrollToPosition(24)
         }
         
         binding.rvAge.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -99,7 +95,7 @@ class DataInputActivity : AppCompatActivity() {
     }
 
     private fun setupUnitToggles() {
-        // 使用 post 确保在布局完成后进行初始化 UI 渲染
+
         binding.toggleUnit.post {
             updateToggleUI(binding.toggleUnit, binding.btnLb.id)
         }
@@ -109,18 +105,19 @@ class DataInputActivity : AppCompatActivity() {
 
         binding.toggleUnit.addOnButtonCheckedListener { group, checkedId, isChecked ->
             if (isChecked) {
-                // 更新数据逻辑
-                when (checkedId) {
-                    binding.btnLb.id -> binding.view1.setText("145.50")
-                    binding.btnKg.id -> binding.view1.setText("66.00")
-                }
 
-                for (i in 0 until group.childCount) {
-                    val child = group.getChildAt(i)
-                    if (child is MaterialButton) {
-                        updateButtonStyle(child, child.id == checkedId)
+                when (checkedId) {
+                    binding.btnLb.id -> {
+                        binding.view1.setupMedicalInput("lb", 2f, 551f, 2, true, 6)
+                        binding.view1.setText("145.50lb")
+                    }
+                    binding.btnKg.id -> {
+                        binding.view1.setupMedicalInput("kg", 1f, 250f, 2, true, 6)
+                        binding.view1.setText("66.00kg")
                     }
                 }
+
+                updateToggleUI(group, checkedId)
             }
         }
 
@@ -131,31 +128,22 @@ class DataInputActivity : AppCompatActivity() {
         binding.toggleUnit1.addOnButtonCheckedListener { group, checkedId, isChecked ->
             if (isChecked) {
                 updateToggleUI(group, checkedId)
-                
-//                val constraintSet = ConstraintSet()
-//                constraintSet.clone(binding.conLayout)
-//
-//                TransitionManager.beginDelayedTransition(binding.conLayout)
+
                 
                 when (checkedId) {
                     binding.btnFTin.id -> {
                         binding.groupFtIn.visibility = View.VISIBLE
                         binding.groupCm.visibility = View.GONE
 
-//                        constraintSet.setVisibility(binding.groupFtIn.id, ConstraintSet.VISIBLE)
-//                        constraintSet.setVisibility(binding.groupCm.id, ConstraintSet.GONE)
                     }
 
                     binding.btnCM.id -> {
                         binding.groupFtIn.visibility = View.GONE
                         binding.groupCm.visibility = View.VISIBLE
                         binding.view11.setText("170")
-//                        constraintSet.setVisibility(binding.groupFtIn.id, ConstraintSet.GONE)
-//                        constraintSet.setVisibility(binding.groupCm.id, ConstraintSet.VISIBLE)
                     }
                 }
-//                constraintSet.applyTo(binding.conLayout)
-                
+
                 for (i in 0 until group.childCount) {
                     val child = group.getChildAt(i)
                     if (child is MaterialButton) {
@@ -170,11 +158,15 @@ class DataInputActivity : AppCompatActivity() {
         for (i in 0 until group.childCount) {
             val button = group.getChildAt(i) as? MaterialButton ?: continue
             if (button.id == checkedId) {
-                // 选中状态：白色背景，黑色文字
                 button.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
                 button.setTextColor(Color.BLACK)
+                for (i in 0 until group.childCount) {
+                    val child = group.getChildAt(i)
+                    if (child is MaterialButton) {
+                        updateButtonStyle(child, child.id == checkedId)
+                    }
+                }
             } else {
-                // 未选中状态：透明背景，灰色文字
                 button.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
                 button.setTextColor("#999999".toColorInt())
             }
@@ -208,11 +200,7 @@ class DataInputActivity : AppCompatActivity() {
     }
 
     private fun setupDateTime() {
-//        val dateFormater = SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH)
-//        binding.tvData.text = dateFormater.format(Date())
-//
-//        val timeFormater = SimpleDateFormat("HH:mm", Locale.ENGLISH)
-//        binding.tvAfternoon.text = timeFormater.format(Date())
+
     }
 
     private fun setupListeners() {
