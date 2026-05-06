@@ -46,7 +46,7 @@
                 <View
                     android:id="@+id/monthCenterHelper"
                     android:layout_width="match_parent"
-                    android:layout_height="35dp"
+                    android:layout_height="31dp"
                     android:visibility="invisible"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -82,7 +82,7 @@
                 <View
                     android:id="@+id/dayCenterHelper"
                     android:layout_width="match_parent"
-                    android:layout_height="35dp"
+                    android:layout_height="31dp"
                     android:visibility="invisible"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -118,7 +118,7 @@
                 <View
                     android:id="@+id/yearCenterHelper"
                     android:layout_width="match_parent"
-                    android:layout_height="35dp"
+                    android:layout_height="31dp"
                     android:visibility="invisible"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />

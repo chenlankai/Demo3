@@ -86,6 +86,7 @@
 	<string name="bmi_result_suggest_start">当前身高的正常体重（%s）：\n</string>
 	<string name="bmi_range_normal_adult_description">恭喜！你现在的体重很健康。坚持好的生活习惯，继续保持健康的体重。</string>
 	<string name="habit_morning">早上</string>
+	<string name="morning">早上</string>
     <string name="app_recommend_30_day">30天健身锻炼</string>
     <string name="app_recommend_step_tracker">计步器：免费计步器&amp;卡路里追踪工具</string>
     <string name="app_recommend_blood_pressure_monitor">血压追踪器 - 血压记录</string>

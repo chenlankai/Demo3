@@ -10,7 +10,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
+import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityDataInputBinding
+import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogTimePickerBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.AgeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.util.dpToPx
 import bmicalculator.bmi.calculator.weightlosstracker.util.setupMedicalInput
@@ -26,7 +28,14 @@ class DataInputActivity : AppCompatActivity() {
     private var isMale: Boolean = true
     private var selectedAge: Int = 25
     private val allMonths = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")
-    private val allMonths = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")
+    private val timeOptions by lazy {
+        listOf(
+            getString(R.string.morning),
+            getString(R.string.afternoon),
+            getString(R.string.evening),
+            getString(R.string.night)
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -184,6 +193,9 @@ class DataInputActivity : AppCompatActivity() {
         binding.tvData.setOnClickListener {
             showDatePickerDialog()
         }
+        binding.tvAfternoon.setOnClickListener {
+            showTimePickerDialog()
+        }
         binding.btnCalculate.setOnClickListener {
             val gender = if (isMale) "Male" else "Female"
             val age = selectedAge
@@ -237,6 +249,7 @@ class DataInputActivity : AppCompatActivity() {
             // 3. 日期数据 (考虑大月小月、闰年，以及今天的限制)
             val selectedMonth = dialogBinding.monthPicker.selectedPosition
             val cal = Calendar.getInstance()
+            cal.set(Calendar.DAY_OF_MONTH, 1) // 避免月份切换时的溢出
             cal.set(Calendar.YEAR, selectedYear)
             cal.set(Calendar.MONTH, selectedMonth)
             val maxDaysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -265,6 +278,29 @@ class DataInputActivity : AppCompatActivity() {
             
             val monthStr = allMonths[monthIdx]
             binding.tvData.text = "$monthStr $day, $year"
+            dialog.dismiss()
+        }
+        dialog.show()
+    }
+
+    private fun showTimePickerDialog() {
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        dialog.behavior.isDraggable = false
+        dialog.window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            ?.setBackgroundColor(Color.TRANSPARENT)
+
+        val dialogBinding = DialogTimePickerBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogBinding.root)
+
+        val currentText = binding.tvAfternoon.text.toString()
+        val initialPosition = timeOptions.indexOf(currentText).coerceAtLeast(0)
+
+        dialogBinding.timePicker.setData(timeOptions, initialPosition)
+
+        dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
+        dialogBinding.btnDone.setOnClickListener {
+            val selected = timeOptions[dialogBinding.timePicker.selectedPosition]
+            binding.tvAfternoon.text = selected
             dialog.dismiss()
         }
         dialog.show()
