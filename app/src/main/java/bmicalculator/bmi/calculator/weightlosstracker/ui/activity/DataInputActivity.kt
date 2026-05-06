@@ -21,6 +21,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 
 class DataInputActivity : AppCompatActivity() {
 
@@ -53,13 +54,13 @@ class DataInputActivity : AppCompatActivity() {
     }
 
     private fun init() {
-        binding.view1.setupMedicalInput("lb", 4.4f, 551.15f, 2, false, 6)
+        binding.view1.setupMedicalInput("lb", 2f, 551f, 2, false, 6)
         binding.view1.setText("141.50")
 
-        binding.view11.setupMedicalInput("cm", 30f, 250f, 1, false, 5)
-        binding.view2.setupMedicalInput("'", 1f, 8f, 0, true, 2)
+        binding.view11.setupMedicalInput("cm", 1f, 250f, 1, false, 5)
+        binding.view2.setupMedicalInput("'", 1f, 8f, 0, true, 1)
         binding.view2.setText("5")
-        binding.view3.setupMedicalInput("''", 0f, 11f, 0, true, 4)
+        binding.view3.setupMedicalInput("''", 0f, 11f, 0, true, 2)
         binding.view3.setText("10")
     }
 
@@ -80,6 +81,7 @@ class DataInputActivity : AppCompatActivity() {
             binding.rvAge.setPadding(padding, 0, padding, 0)
             binding.rvAge.clipToPadding = false
             binding.rvAge.scrollToPosition(24)
+            updateItemsAlpha()
         }
         
         binding.rvAge.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -92,7 +94,9 @@ class DataInputActivity : AppCompatActivity() {
                         selectedAge = ages[position]
                     }
                 }
+                updateItemsAlpha()
             }
+
         })
     }
 
@@ -107,13 +111,13 @@ class DataInputActivity : AppCompatActivity() {
 
                 when (checkedId) {
                     binding.btnLb.id -> {
-                        val lbValue = (currentValue / 0.45359237f).coerceIn(4.4f, 551.15f)
-                        binding.view1.setupMedicalInput("lb", 4.4f, 551.15f, 2, false, 6)
+                        val lbValue = (currentValue / 0.45359237f).coerceIn(2f, 551f)
+                        binding.view1.setupMedicalInput("lb", 2f, 551f, 2, false, 6)
                         binding.view1.setText(String.format(Locale.US, "%.2f", lbValue))
                     }
                     binding.btnKg.id -> {
-                        val kgValue = (currentValue * 0.45359237f).coerceIn(2f, 250f)
-                        binding.view1.setupMedicalInput("kg", 2f, 250f, 2, false, 6)
+                        val kgValue = (currentValue * 0.45359237f).coerceIn(1f, 250f)
+                        binding.view1.setupMedicalInput("kg", 1f, 250f, 2, false, 6)
                         binding.view1.setText(String.format(Locale.US, "%.2f", kgValue))
                     }
                 }
@@ -320,6 +324,19 @@ class DataInputActivity : AppCompatActivity() {
             button.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
             button.setTextColor(Color.GRAY)
             button.alpha = 0.5f
+        }
+    }
+    private fun updateItemsAlpha() {
+        val layoutManager = binding.rvAge.layoutManager as? LinearLayoutManager ?: return
+        val centerX = (binding.rvAge.width / 2).toFloat()
+        for (i in 0 until layoutManager.childCount) {
+            val child = layoutManager.getChildAt(i) ?: continue
+            val childCenterX = (child.left + child.right) / 2f
+            val distance = abs(childCenterX - centerX)
+            // 距离 0 处 alpha = 1.0，随着距离增大 alpha 递减，最大距离设为 itemWidth * 2（远大于后 alpha 0.1）
+            val maxDistance = 100.dpToPx(this).toFloat() // 可根据需要调整，建议约两个item宽度
+            val alpha = (1f - (distance / maxDistance)).coerceIn(0.1f, 1f)
+            child.alpha = alpha
         }
     }
 }

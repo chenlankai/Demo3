@@ -6,6 +6,7 @@ import android.content.Context
 import android.text.*
 import android.view.MotionEvent
 import android.util.DisplayMetrics
+import android.view.Gravity
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.Toast
@@ -81,6 +82,7 @@ fun View.systemBarsBottomPadding() {
         insets
     }
 }
+
 fun EditText.setupMedicalInput(
     unit: String,
     min: Float,
@@ -88,6 +90,7 @@ fun EditText.setupMedicalInput(
     decimalDigits: Int,
     showUnitDuringEdit: Boolean,
     maxLen: Int
+
 ) {
     require(decimalDigits in 0..2) { "decimalDigits must be 0, 1, or 2" }
 
@@ -96,6 +99,21 @@ fun EditText.setupMedicalInput(
         this.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
                 val rawInput = text.toString().filter { it.isDigit() || it == '.' }
+                val value1 = rawInput.toFloatOrNull()
+                val isValid = value1 != null && value1 in min..max
+                if (!isValid) {
+                    setText("$min")
+                    setSelection(0)
+                    val message = if (unit == "kg" || unit == "lb") {
+                        "Please input a valid weight ($min - $max $unit) to calculate your BMI accurately"
+                    } else {
+                        "Please input a valid Height ($min - $max $unit) to calculate your BMI accurately"
+                    }
+                    val toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
+                    toast.setGravity(Gravity.TOP, 0, 50)
+                    toast.show()
+                    return@OnFocusChangeListener
+                }
                 val value = if (rawInput.isEmpty()) min else rawInput.toFloatOrNull() ?: min
                 val clamped = value.coerceIn(min, max)
                 val format = when (decimalDigits) {
@@ -237,12 +255,44 @@ fun EditText.setupMedicalInput(
             if (!fullText.endsWith(unit)) return@OnFocusChangeListener
             val numStr = fullText.substring(0, fullText.length - unit.length).trim()
             if (numStr.isEmpty()) {
+
                 setText("$min$unit")
                 attachSelectionWatcher()
                 setSelection(0)
+                if (unit == "kg" || unit == "lb")
+                {
+                    val toast = Toast.makeText(context, "Please input a valid weight ($min - $max $unit)  to calculate your BMI accurately", Toast.LENGTH_SHORT)
+                    toast.setGravity(Gravity.TOP, 0, 50)
+                    toast.show()
+                }
+                else{
+                    val toast = Toast.makeText(context, "Please input a valid Height ($min - $max $unit)  to calculate your BMI accurately", Toast.LENGTH_SHORT)
+                    toast.setGravity(Gravity.TOP, 0, 50)
+                    toast.show()
+                }
+                return@OnFocusChangeListener
+
+            }
+
+
+            val value1 = numStr.toFloatOrNull()
+            val isValid = value1 != null && value1 in min..max
+            if (!isValid) {
+
+                setText("$min$unit")
+                attachSelectionWatcher()
+                setSelection(0)
+                val message = if (unit == "kg" || unit == "lb") {
+                    "Please input a valid weight ($min - $max $unit) to calculate your BMI accurately"
+                } else {
+                    "Please input a valid Height ($min - $max $unit) to calculate your BMI accurately"
+                }
+                val toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
+                toast.setGravity(Gravity.TOP, 0, 50)
+                toast.show()
                 return@OnFocusChangeListener
             }
-            var value = (numStr.toFloatOrNull() ?: min).coerceIn(min, max)
+            val value = (numStr.toFloatOrNull() ?: min).coerceIn(min, max)
             val formatStr = when (decimalDigits) {
                 0 -> "%.0f"
                 1 -> "%.1f"
