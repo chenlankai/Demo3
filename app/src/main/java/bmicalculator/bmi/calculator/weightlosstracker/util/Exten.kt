@@ -118,7 +118,6 @@ fun EditText.setupMedicalInput(
         return
     }
 
-    // --- 实时拦截并纠正光标位置的 SpanWatcher ---
     val selectionWatcher = object : SpanWatcher {
         private var isSelecting = false
         override fun onSpanAdded(text: Spannable?, span: Any?, start: Int, end: Int) {}
@@ -162,7 +161,12 @@ fun EditText.setupMedicalInput(
     filters = arrayOf(InputFilter.LengthFilter(maxLen + unit.length))
 
     var isUpdating = false
-    addTextChangedListener(object : TextWatcher {
+    val oldTextWatcher = getTag(bmicalculator.bmi.calculator.weightlosstracker.R.id.tag_medical_text_watcher) as? TextWatcher
+    if (oldTextWatcher != null) {
+        removeTextChangedListener(oldTextWatcher)
+    }
+
+    val textWatcher = object : TextWatcher {
         override fun afterTextChanged(s: Editable?) {
             if (isUpdating) return
 
@@ -196,7 +200,9 @@ fun EditText.setupMedicalInput(
         }
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-    })
+    }
+    addTextChangedListener(textWatcher)
+    setTag(bmicalculator.bmi.calculator.weightlosstracker.R.id.tag_medical_text_watcher, textWatcher)
 
 
     setOnTouchListener { v, event ->

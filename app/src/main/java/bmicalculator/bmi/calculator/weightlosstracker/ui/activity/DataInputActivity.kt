@@ -4,22 +4,12 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.transition.TransitionManager
 import android.util.Log
 import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
-import androidx.core.graphics.toColorInt
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityDataInputBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.AgeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.util.dpToPx
@@ -42,25 +32,26 @@ class DataInputActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.headerLayout.systemBarsTopPadding()
 
-
         setupAgeRecyclerView()
         setupUnitToggles()
         setupGenderSelection()
         setupDateTime()
         setupListeners()
-        
         updateGenderUI()
-
         init()
-
-
     }
-    private fun init(){
-        binding.view1.setupMedicalInput("kg",1f,250f,2,true,6) //kg
-        binding.view11.setupMedicalInput("cm",1f,250f,1,true,5) //cm
-        binding.view2.setupMedicalInput("'",1f,8f,0,true,2) //ft
-        binding.view3.setupMedicalInput("''",0f,11f,0,true,4) //in
+
+    private fun init() {
+        binding.view1.setupMedicalInput("lb", 4.4f, 551.15f, 2, false, 6)
+        binding.view1.setText("141.50")
+
+        binding.view11.setupMedicalInput("cm", 30f, 250f, 1, false, 5)
+        binding.view2.setupMedicalInput("'", 1f, 8f, 0, true, 2)
+        binding.view2.setText("5")
+        binding.view3.setupMedicalInput("''", 0f, 11f, 0, true, 4)
+        binding.view3.setText("10")
     }
+
     private fun setupAgeRecyclerView() {
         val ages = (1..120).toList()
         val adapter = AgeAdapter(ages) { position ->
@@ -95,59 +86,52 @@ class DataInputActivity : AppCompatActivity() {
     }
 
     private fun setupUnitToggles() {
-
-        binding.toggleUnit.post {
-            updateToggleUI(binding.toggleUnit, binding.btnLb.id)
-        }
-        binding.toggleUnit1.post {
-            updateToggleUI(binding.toggleUnit1, binding.btnFTin.id)
-        }
+        binding.toggleUnit.post { updateToggleUI(binding.toggleUnit, binding.btnLb.id) }
+        binding.toggleUnit1.post { updateToggleUI(binding.toggleUnit1, binding.btnFTin.id) }
 
         binding.toggleUnit.addOnButtonCheckedListener { group, checkedId, isChecked ->
             if (isChecked) {
+                val currentText = binding.view1.text.toString().filter { it.isDigit() || it == '.' }
+                val currentValue = currentText.toFloatOrNull() ?: 0f
 
                 when (checkedId) {
                     binding.btnLb.id -> {
-                        binding.view1.setupMedicalInput("lb", 2f, 551f, 2, true, 6)
-                        binding.view1.setText("145.50lb")
+                        val lbValue = (currentValue / 0.45359237f).coerceIn(4.4f, 551.15f)
+                        binding.view1.setupMedicalInput("lb", 4.4f, 551.15f, 2, false, 6)
+                        binding.view1.setText(String.format(Locale.US, "%.2f", lbValue))
                     }
                     binding.btnKg.id -> {
-                        binding.view1.setupMedicalInput("kg", 1f, 250f, 2, true, 6)
-                        binding.view1.setText("66.00kg")
+                        val kgValue = (currentValue * 0.45359237f).coerceIn(2f, 250f)
+                        binding.view1.setupMedicalInput("kg", 2f, 250f, 2, false, 6)
+                        binding.view1.setText(String.format(Locale.US, "%.2f", kgValue))
                     }
                 }
-
                 updateToggleUI(group, checkedId)
             }
         }
 
-
-
-
-
         binding.toggleUnit1.addOnButtonCheckedListener { group, checkedId, isChecked ->
             if (isChecked) {
                 updateToggleUI(group, checkedId)
-
-                
                 when (checkedId) {
                     binding.btnFTin.id -> {
+                        val cmText = binding.view11.text.toString().filter { it.isDigit() || it == '.' }
+                        val cmValue = cmText.toFloatOrNull() ?: 170f
+                        val totalInches = cmValue / 2.54f
+                        val feet = (totalInches / 12).toInt().coerceIn(1, 8)
+                        val inches = Math.round(totalInches % 12).toInt().coerceIn(0, 11)
+                        binding.view2.setText(feet.toString())
+                        binding.view3.setText(inches.toString())
                         binding.groupFtIn.visibility = View.VISIBLE
                         binding.groupCm.visibility = View.GONE
-
                     }
-
                     binding.btnCM.id -> {
+                        val feet = binding.view2.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 5f
+                        val inches = binding.view3.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 7f
+                        val cmValue = ((feet * 12) + inches) * 2.54f
+                        binding.view11.setText(String.format(Locale.US, "%.1f", cmValue.coerceIn(1f, 250f)))
                         binding.groupFtIn.visibility = View.GONE
                         binding.groupCm.visibility = View.VISIBLE
-                        binding.view11.setText("170")
-                    }
-                }
-
-                for (i in 0 until group.childCount) {
-                    val child = group.getChildAt(i)
-                    if (child is MaterialButton) {
-                        updateButtonStyle(child, child.id == checkedId)
                     }
                 }
             }
@@ -157,19 +141,7 @@ class DataInputActivity : AppCompatActivity() {
     private fun updateToggleUI(group: MaterialButtonToggleGroup, checkedId: Int) {
         for (i in 0 until group.childCount) {
             val button = group.getChildAt(i) as? MaterialButton ?: continue
-            if (button.id == checkedId) {
-                button.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
-                button.setTextColor(Color.BLACK)
-                for (i in 0 until group.childCount) {
-                    val child = group.getChildAt(i)
-                    if (child is MaterialButton) {
-                        updateButtonStyle(child, child.id == checkedId)
-                    }
-                }
-            } else {
-                button.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
-                button.setTextColor("#999999".toColorInt())
-            }
+            updateButtonStyle(button, button.id == checkedId)
         }
     }
 
@@ -178,7 +150,6 @@ class DataInputActivity : AppCompatActivity() {
             isMale = true
             updateGenderUI()
         }
-        
         binding.layoutFemale.setOnClickListener {
             isMale = false
             updateGenderUI()
@@ -200,10 +171,14 @@ class DataInputActivity : AppCompatActivity() {
     }
 
     private fun setupDateTime() {
-
+        val calendar = Calendar.getInstance()
+        binding.tvData.text = SimpleDateFormat("MMMM d, yyyy", Locale.US).format(calendar.time)
     }
 
     private fun setupListeners() {
+        binding.tvData.setOnClickListener {
+            showDatePickerDialog()
+        }
         binding.btnCalculate.setOnClickListener {
             val gender = if (isMale) "Male" else "Female"
             val age = selectedAge
@@ -216,6 +191,76 @@ class DataInputActivity : AppCompatActivity() {
             Log.d("DataInput", "Gender: $gender, Age: $age, Weight: $weight, Height: $height")
         }
     }
+
+    private fun showDatePickerDialog() {
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        dialog.behavior.isDraggable = false // 禁用滑动关闭，防止与选择器冲突
+        dialog.window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            ?.setBackgroundColor(Color.TRANSPARENT)
+
+        val dialogBinding = bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDatePickerBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogBinding.root)
+
+        val calendar = Calendar.getInstance()
+        val today = Calendar.getInstance()
+        try {
+            val sdf = SimpleDateFormat("MMMM d, yyyy", Locale.US)
+            sdf.parse(binding.tvData.text.toString())?.let { calendar.time = it }
+        } catch (e: Exception) {}
+
+        // 1. 年份数据 (限制到今年)
+        val currentYear = today.get(Calendar.YEAR)
+        val years = (1900..currentYear).map { it.toString() }
+        dialogBinding.yearPicker.setData(years, (calendar.get(Calendar.YEAR) - 1900).coerceIn(0, years.size - 1))
+
+        val allMonths = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+        // 联动逻辑：年份改变 -> 月份列表改变 -> 日期列表改变
+        fun updatePickers(isInitial: Boolean = false) {
+            val selectedYear = 1900 + dialogBinding.yearPicker.selectedPosition
+            
+            // 2. 月份数据 (如果今年，限制到当月)
+            val monthsLimit = if (selectedYear == currentYear) today.get(Calendar.MONTH) + 1 else 12
+            val monthsToShow = allMonths.take(monthsLimit)
+            val initialMonth = if (isInitial) calendar.get(Calendar.MONTH) else dialogBinding.monthPicker.selectedPosition
+            dialogBinding.monthPicker.setData(monthsToShow, initialMonth.coerceIn(0, monthsToShow.size - 1))
+            
+            // 3. 日期数据 (考虑大月小月、闰年，以及今天的限制)
+            val selectedMonth = dialogBinding.monthPicker.selectedPosition
+            val cal = Calendar.getInstance()
+            cal.set(Calendar.YEAR, selectedYear)
+            cal.set(Calendar.MONTH, selectedMonth)
+            val maxDaysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+            
+            val daysLimit = if (selectedYear == currentYear && selectedMonth == today.get(Calendar.MONTH)) {
+                today.get(Calendar.DAY_OF_MONTH)
+            } else {
+                maxDaysInMonth
+            }
+            
+            val days = (1..daysLimit).map { it.toString() }
+            val initialDay = if (isInitial) calendar.get(Calendar.DAY_OF_MONTH) - 1 else dialogBinding.dayPicker.selectedPosition
+            dialogBinding.dayPicker.setData(days, initialDay.coerceIn(0, days.size - 1))
+        }
+
+        updatePickers(true)
+        
+        dialogBinding.yearPicker.onItemSelected = { updatePickers() }
+        dialogBinding.monthPicker.onItemSelected = { updatePickers() }
+
+        dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
+        dialogBinding.btnDone.setOnClickListener {
+            val selected = Calendar.getInstance()
+            val year = 1900 + dialogBinding.yearPicker.selectedPosition
+            val month = dialogBinding.monthPicker.selectedPosition
+            val day = 1 + dialogBinding.dayPicker.selectedPosition
+            selected.set(year, month, day)
+            binding.tvData.text = SimpleDateFormat("MMMM d, yyyy", Locale.US).format(selected.time)
+            dialog.dismiss()
+        }
+        dialog.show()
+    }
+
     private fun updateButtonStyle(button: MaterialButton, isSelected: Boolean) {
         val shapeModel = button.shapeAppearanceModel.toBuilder()
             .setAllCornerSizes(100f)
@@ -232,5 +277,4 @@ class DataInputActivity : AppCompatActivity() {
             button.alpha = 0.5f
         }
     }
-
 }
