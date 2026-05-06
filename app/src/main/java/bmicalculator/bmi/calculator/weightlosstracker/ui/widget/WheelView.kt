@@ -17,11 +17,21 @@ class WheelView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    var visibleItems = 7
-    var textSize = 18f * resources.displayMetrics.scaledDensity
+    private val density = resources.displayMetrics.density
+    private val scaledDensity = resources.displayMetrics.scaledDensity
+
+    // 设计参数
+    private val VISIBLE_ITEMS = 7
+    private val ITEM_HEIGHT_DP = 31f
+    private val PADDING_VERTICAL_DP = 15f
+    private val TEXT_SIZE_SP = 14f
+
+    var itemHeight = (ITEM_HEIGHT_DP * density).toInt()
+    private val verticalPadding = (PADDING_VERTICAL_DP * density).toInt()
+    var textSize = TEXT_SIZE_SP * scaledDensity
+    
     var textColorNormal = Color.parseColor("#999999")
     var textColorSelected = Color.BLACK
-    var itemHeight = 0
 
     var items: List<String> = emptyList()
     var selectedPosition = 0
@@ -36,11 +46,8 @@ class WheelView @JvmOverloads constructor(
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             isDragging = true
             if (items.isEmpty()) return true
-            
             val maxOffset = selectedPosition * itemHeight.toFloat()
             val minOffset = -(items.size - 1 - selectedPosition) * itemHeight.toFloat()
-            
-            // 实时硬限制滑动范围
             offsetY = (offsetY - distanceY).coerceIn(minOffset, maxOffset)
             invalidate()
             return true
@@ -49,11 +56,8 @@ class WheelView @JvmOverloads constructor(
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             isDragging = false
             if (items.isEmpty()) return true
-            
             val maxOffset = selectedPosition * itemHeight.toFloat()
             val minOffset = -(items.size - 1 - selectedPosition) * itemHeight.toFloat()
-            
-            // 惯性滚动也必须在边界内
             scroller.fling(0, offsetY.toInt(), 0, velocityY.toInt(), 0, 0, minOffset.toInt(), maxOffset.toInt())
             invalidate()
             return true
@@ -98,10 +102,10 @@ class WheelView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        if (measuredHeight > 0) {
-            itemHeight = measuredHeight / visibleItems
-        }
+
+        val totalHeight = itemHeight * VISIBLE_ITEMS + verticalPadding * 2
+        val width = getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
+        setMeasuredDimension(width, totalHeight)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -111,8 +115,6 @@ class WheelView @JvmOverloads constructor(
         val center = height / 2f
         val maxOffset = selectedPosition * itemHeight.toFloat()
         val minOffset = -(items.size - 1 - selectedPosition) * itemHeight.toFloat()
-        
-        // 双重保险：确保绘制时 offsetY 绝不越界
         val clampedOffsetY = offsetY.coerceIn(minOffset, maxOffset)
 
         for (i in items.indices) {
@@ -136,9 +138,7 @@ class WheelView @JvmOverloads constructor(
         val handled = gestureDetector.onTouchEvent(event)
         if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
             isDragging = false
-            if (scroller.isFinished) {
-                startSnap()
-            }
+            if (scroller.isFinished) startSnap()
         }
         return handled
     }
@@ -148,7 +148,6 @@ class WheelView @JvmOverloads constructor(
         val movedItems = (offsetY / itemHeight).roundToInt()
         val targetPosition = (selectedPosition - movedItems).coerceIn(0, items.size - 1)
         val targetOffsetY = (selectedPosition - targetPosition) * itemHeight
-        
         scroller.startScroll(0, offsetY.toInt(), 0, (targetOffsetY - offsetY).toInt(), 200)
         invalidate()
     }
@@ -156,7 +155,6 @@ class WheelView @JvmOverloads constructor(
     override fun computeScroll() {
         if (scroller.computeScrollOffset()) {
             offsetY = scroller.currY.toFloat()
-            // 在动画执行过程中也实时约束边界
             if (items.isNotEmpty()) {
                 val maxOffset = selectedPosition * itemHeight.toFloat()
                 val minOffset = -(items.size - 1 - selectedPosition) * itemHeight.toFloat()
@@ -166,7 +164,6 @@ class WheelView @JvmOverloads constructor(
         } else if (!isDragging && abs(offsetY) > 0.1f) {
             val movedItems = (offsetY / itemHeight).roundToInt()
             val newPos = (selectedPosition - movedItems).coerceIn(0, items.size - 1)
-            
             selectedPosition = newPos
             offsetY = 0f
             onItemSelected?.invoke(selectedPosition)

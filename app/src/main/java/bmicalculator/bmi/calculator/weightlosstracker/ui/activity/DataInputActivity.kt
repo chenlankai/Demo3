@@ -25,6 +25,8 @@ class DataInputActivity : AppCompatActivity() {
     private lateinit var binding: ActivityDataInputBinding
     private var isMale: Boolean = true
     private var selectedAge: Int = 25
+    private val allMonths = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")
+    private val allMonths = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -172,7 +174,10 @@ class DataInputActivity : AppCompatActivity() {
 
     private fun setupDateTime() {
         val calendar = Calendar.getInstance()
-        binding.tvData.text = SimpleDateFormat("MMMM d, yyyy", Locale.US).format(calendar.time)
+        val monthStr = allMonths[calendar.get(Calendar.MONTH)]
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val year = calendar.get(Calendar.YEAR)
+        binding.tvData.text = "$monthStr $day, $year"
     }
 
     private fun setupListeners() {
@@ -203,17 +208,21 @@ class DataInputActivity : AppCompatActivity() {
 
         val calendar = Calendar.getInstance()
         val today = Calendar.getInstance()
-        try {
-            val sdf = SimpleDateFormat("MMMM d, yyyy", Locale.US)
-            sdf.parse(binding.tvData.text.toString())?.let { calendar.time = it }
-        } catch (e: Exception) {}
+        
+        // 解析当前显示的日期
+        val currentText = binding.tvData.text.toString()
+        val parts = currentText.replace(",", "").split(" ")
+        if (parts.size >= 3) {
+            val mIdx = allMonths.indexOf(parts[0])
+            if (mIdx != -1) calendar.set(Calendar.MONTH, mIdx)
+            calendar.set(Calendar.DAY_OF_MONTH, parts[1].toIntOrNull() ?: 1)
+            calendar.set(Calendar.YEAR, parts[2].toIntOrNull() ?: today.get(Calendar.YEAR))
+        }
 
         // 1. 年份数据 (限制到今年)
         val currentYear = today.get(Calendar.YEAR)
         val years = (1900..currentYear).map { it.toString() }
         dialogBinding.yearPicker.setData(years, (calendar.get(Calendar.YEAR) - 1900).coerceIn(0, years.size - 1))
-
-        val allMonths = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")
 
         // 联动逻辑：年份改变 -> 月份列表改变 -> 日期列表改变
         fun updatePickers(isInitial: Boolean = false) {
@@ -250,12 +259,12 @@ class DataInputActivity : AppCompatActivity() {
 
         dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
         dialogBinding.btnDone.setOnClickListener {
-            val selected = Calendar.getInstance()
             val year = 1900 + dialogBinding.yearPicker.selectedPosition
-            val month = dialogBinding.monthPicker.selectedPosition
+            val monthIdx = dialogBinding.monthPicker.selectedPosition
             val day = 1 + dialogBinding.dayPicker.selectedPosition
-            selected.set(year, month, day)
-            binding.tvData.text = SimpleDateFormat("MMMM d, yyyy", Locale.US).format(selected.time)
+            
+            val monthStr = allMonths[monthIdx]
+            binding.tvData.text = "$monthStr $day, $year"
             dialog.dismiss()
         }
         dialog.show()
