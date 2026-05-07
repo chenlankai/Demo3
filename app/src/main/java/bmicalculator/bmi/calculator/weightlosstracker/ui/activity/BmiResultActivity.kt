@@ -8,11 +8,14 @@ import androidx.appcompat.app.AppCompatActivity
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityBmiResultBinding
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDeleteConfirmBinding
 import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
+import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.BmiRangeAdapter
+import androidx.recyclerview.widget.LinearLayoutManager
 import java.util.*
 
 class BmiResultActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityBmiResultBinding
+    private val rangeAdapter = BmiRangeAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,6 +23,7 @@ class BmiResultActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupBmiResult()
+        setupRecyclerView()
 
         binding.tvDiscard.setOnClickListener {
             showDeleteConfirmDialog()
@@ -93,6 +97,17 @@ class BmiResultActivity : AppCompatActivity() {
         
         val infoLine1 = "$weightVal $weightUnit | $heightStr | $genderStr | $age years old"
         binding.tvMessage.text = "$infoLine1"
+
+        // 6. 更新列表数据
+        rangeAdapter.setData(sections, bmi)
+    }
+
+    private fun setupRecyclerView() {
+        binding.rvStatus.apply {
+            layoutManager = LinearLayoutManager(this@BmiResultActivity)
+            adapter = rangeAdapter
+            isNestedScrollingEnabled = false
+        }
     }
 
     private fun showDeleteConfirmDialog() {

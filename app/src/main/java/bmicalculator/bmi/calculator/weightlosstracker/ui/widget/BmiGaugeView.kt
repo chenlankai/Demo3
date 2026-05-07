@@ -65,23 +65,19 @@ class BmiGaugeView @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * 设置 BMI 并执行顺时针旋转动画
-     * 自动处理边界逻辑：小于最小值停在最左，大于最大值停在最右
-     */
     fun setBmi(value: Float) {
-        // 1. 边界限制处理
+
         val targetBmi = value.coerceIn(minBmi, maxBmi)
         currentBmi = targetBmi
 
-        // 2. 计算映射角度 (180° - 360°)
+
         val ratio = (targetBmi - minBmi) / (maxBmi - minBmi)
         val targetAngle = 180f + (ratio * 180f)
 
         // 3. 执行平滑动画
         pointerAnimator?.cancel()
         pointerAnimator = ValueAnimator.ofFloat(animatedAngle, targetAngle).apply {
-            duration = 1000
+            duration = 2000
             interpolator = DecelerateInterpolator()
             addUpdateListener { animation ->
                 animatedAngle = animation.animatedValue as Float

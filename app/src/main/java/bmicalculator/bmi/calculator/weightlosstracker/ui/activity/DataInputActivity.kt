@@ -239,7 +239,7 @@ class DataInputActivity : AppCompatActivity() {
                     putExtra("EXTRA_GENDER", gender)
                     putExtra("EXTRA_AGE", age)
                     putExtra("EXTRA_HEIGHT_M", heightM)
-                    // 额外传递原始输入的所有数据
+
                     putExtra("EXTRA_DATE", binding.tvData.text.toString())
                     putExtra("EXTRA_TIME", binding.tvAfternoon.text.toString())
                     putExtra("EXTRA_WEIGHT_VAL", weightText)
