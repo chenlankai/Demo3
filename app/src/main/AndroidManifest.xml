@@ -23,6 +23,9 @@
         <activity
             android:name=".ui.activity.DataInputActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.activity.BmiResultActivity"
+            android:exported="false" />
 
     </application>
 

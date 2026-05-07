@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
+import android.content.Intent
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityDataInputBinding
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogTimePickerBinding
@@ -201,15 +202,54 @@ class DataInputActivity : AppCompatActivity() {
             showTimePickerDialog()
         }
         binding.btnCalculate.setOnClickListener {
-            val gender = if (isMale) "Male" else "Female"
+            val gender = if (isMale) 0 else 1
             val age = selectedAge
-            val weight = binding.view1.text.toString()
-            val height = if (binding.toggleUnit1.checkedButtonId == binding.btnFTin.id) {
-                "${binding.view2.text}${binding.view3.text}"
-            } else {
-                "${binding.view11.text} cm"
+            
+            // 获取体重及单位
+            val weightText = binding.view1.text.toString().filter { it.isDigit() || it == '.' }
+            val weightUnit = if (binding.toggleUnit.checkedButtonId == binding.btnLb.id) "lb" else "kg"
+            var weightKg = weightText.toFloatOrNull() ?: 0f
+            if (weightUnit == "lb") {
+                weightKg *= 0.45359237f
             }
-            Log.d("DataInput", "Gender: $gender, Age: $age, Weight: $weight, Height: $height")
+
+            // 获取身高及单位
+            var heightM: Float
+            val heightUnit = if (binding.toggleUnit1.checkedButtonId == binding.btnFTin.id) "ft+in" else "cm"
+            val hVal1: String
+            val hVal2: String
+            if (heightUnit == "ft+in") {
+                hVal1 = binding.view2.text.toString().filter { it.isDigit() }
+                hVal2 = binding.view3.text.toString().filter { it.isDigit() }
+                val feet = hVal1.toFloatOrNull() ?: 0f
+                val inches = hVal2.toFloatOrNull() ?: 0f
+                heightM = ((feet * 12) + inches) * 0.0254f
+            } else {
+                hVal1 = binding.view11.text.toString().filter { it.isDigit() || it == '.' }
+                hVal2 = ""
+                val cm = hVal1.toFloatOrNull() ?: 0f
+                heightM = cm / 100f
+            }
+
+            if (weightKg > 0 && heightM > 0) {
+                val bmi = weightKg / (heightM * heightM)
+                
+                val intent = Intent(this, BmiResultActivity::class.java).apply {
+                    putExtra("EXTRA_BMI", bmi)
+                    putExtra("EXTRA_GENDER", gender)
+                    putExtra("EXTRA_AGE", age)
+                    putExtra("EXTRA_HEIGHT_M", heightM)
+                    // 额外传递原始输入的所有数据
+                    putExtra("EXTRA_DATE", binding.tvData.text.toString())
+                    putExtra("EXTRA_TIME", binding.tvAfternoon.text.toString())
+                    putExtra("EXTRA_WEIGHT_VAL", weightText)
+                    putExtra("EXTRA_WEIGHT_UNIT", weightUnit)
+                    putExtra("EXTRA_HEIGHT_VAL1", hVal1)
+                    putExtra("EXTRA_HEIGHT_VAL2", hVal2)
+                    putExtra("EXTRA_HEIGHT_UNIT", heightUnit)
+                }
+                startActivity(intent)
+            }
         }
     }
 
