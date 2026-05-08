@@ -19,6 +19,7 @@ import kotlin.math.sin
 class BmiGaugeView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+    var onBmiChangeListener: ((Float) -> Unit)? = null
 
     private var sections: List<BmiConfigManager.BmiSection> = emptyList()
     private var currentBmi = 22f
@@ -66,21 +67,32 @@ class BmiGaugeView @JvmOverloads constructor(
     }
 
     fun setBmi(value: Float) {
-
         val targetBmi = value.coerceIn(minBmi, maxBmi)
-        currentBmi = targetBmi
 
+
+        val startBmi = 0
 
         val ratio = (targetBmi - minBmi) / (maxBmi - minBmi)
         val targetAngle = 180f + (ratio * 180f)
+        val startAngle = animatedAngle
 
-        // 3. 执行平滑动画
         pointerAnimator?.cancel()
-        pointerAnimator = ValueAnimator.ofFloat(animatedAngle, targetAngle).apply {
+        pointerAnimator = ValueAnimator.ofFloat(0f, 1f).apply { // 改为 0 到 1 的进度因子
             duration = 2000
             interpolator = DecelerateInterpolator()
             addUpdateListener { animation ->
-                animatedAngle = animation.animatedValue as Float
+                val fraction = animation.animatedValue as Float
+
+                // 1. 更新指针角度
+                animatedAngle = startAngle + (targetAngle - startAngle) * fraction
+
+                // 2. 计算当前帧的 BMI 值
+                val frameBmi = startBmi + (targetBmi - startBmi) * fraction
+                currentBmi = frameBmi // 更新 View 内部的当前值
+
+                // 3. 通过接口通知 Activity 更新 TextView
+                onBmiChangeListener?.invoke(frameBmi)
+
                 invalidate()
             }
             start()

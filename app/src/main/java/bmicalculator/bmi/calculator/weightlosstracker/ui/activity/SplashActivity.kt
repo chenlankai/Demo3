@@ -1,4 +1,4 @@
-package bmicalculator.bmi.calculator.weightlosstracker
+package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
 import android.animation.Animator
 import android.animation.AnimatorSet
@@ -11,18 +11,20 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.PathInterpolator
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityMainBinding
+import androidx.lifecycle.lifecycleScope
+import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
+import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivitySplashBinding
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class SplashActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivitySplashBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         startSplashAnimation()
@@ -35,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         val pointer = binding.iconBmiPointer
         val title = binding.iconSplashTraining
 
-        // 初始状态
+        // Initial state
         dial.alpha = 0f
         dial.translationY = 100f
         title.alpha = 0f
@@ -71,19 +73,22 @@ class MainActivity : AppCompatActivity() {
             playSequentially(phase1, bounceRotate)
         }
 
-
         allAnimations.addListener(object : Animator.AnimatorListener {
             override fun onAnimationStart(animation: Animator) {}
             override fun onAnimationEnd(animation: Animator) {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    startActivity(Intent(this@MainActivity, bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity::class.java))
+                lifecycleScope.launch {
+                    val records = AppDatabase.getDatabase(this@SplashActivity).bmiDao().getAllRecords().first()
+                    if (records.isEmpty()) {
+                        startActivity(Intent(this@SplashActivity, DataInputActivity::class.java))
+                    } else {
+                        startActivity(Intent(this@SplashActivity, MainActivity::class.java))
+                    }
                     finish()
-                }, 1000)
+                }
             }
             override fun onAnimationCancel(animation: Animator) {}
             override fun onAnimationRepeat(animation: Animator) {}
         })
         allAnimations.start()
-
     }
 }

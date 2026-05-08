@@ -3,7 +3,10 @@ import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.text.*
+import android.text.style.MetricAffectingSpan
 import android.view.MotionEvent
 import android.util.DisplayMetrics
 import android.view.Gravity
@@ -322,4 +325,11 @@ fun EditText.setupMedicalInput(
         } else false
     }
 }
+class CustomTypefaceSpan(private val typeface: Typeface) : MetricAffectingSpan() {
+    override fun updateDrawState(ds: TextPaint) = applyCustomTypeFace(ds, typeface)
+    override fun updateMeasureState(paint: TextPaint) = applyCustomTypeFace(paint, typeface)
 
+    private fun applyCustomTypeFace(paint: Paint, tf: Typeface) {
+        paint.typeface = tf
+    }
+}

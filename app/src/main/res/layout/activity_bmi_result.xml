@@ -115,14 +115,53 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:paddingStart="15dp"
-                android:paddingEnd="15dp"
+                android:paddingEnd="30dp"
                 tools:listitem="@layout/item_bmi_range"
                 app:layout_constraintTop_toBottomOf="@+id/tvMessage"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 />
 
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:layout_marginStart="30dp"
+                android:layout_marginEnd="30dp"
+                android:padding="17dp"
+                android:text="@string/bmi_range_normal_adult_description"
+                android:background="@drawable/bg_description_rounded"
+                android:fontFamily="@font/montserrat_regular"
 
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:textSize="14sp"
+                android:textColor="#000000"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/rvStatus" />
+            <TextView
+                android:id="@+id/tvSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginEnd="30dp"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="20dp"
+                android:paddingTop="15.5dp"
+                android:paddingBottom="15.5dp"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text = "@string/save"
+                android:fontFamily="@font/montserrat_extrabold"
+                android:background="@drawable/bg_save_rounded"
+                android:textSize="20sp"
+                android:textColor="#FFFFFF"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvDescription"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

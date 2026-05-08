@@ -92,9 +92,13 @@
 	<string name="yesterday">Yesterday</string>
 
 	<string name="bmi_teenager_info_tip">%s years old (%s)</string>
-	<string name="bmi_input_data">%s | %s | %s | %s years old</string>
+	<string name="bmi_input_data">%1$s | %2$s | %3$s | %4$s years old</string>
+	<string name="bmi_height_ft_in_format">%1$sft %2$sin</string>
+	<string name="bmi_height_cm_format">%1$s cm</string>
+	<string name="bmi_weight_lose_format"> (-%1$.1f %2$s)</string>
+	<string name="bmi_weight_gain_format"> (+%1$.1f %2$s)</string>
+	<string name="bmi_range_format">%1$.1f %2$s - %3$.1f %4$s</string>
 
-	<!-- todo 缺失	-->
 
 
 	<!-- 涉及到的这部分文案只有英文才会用到 -->
@@ -125,7 +129,7 @@
 	<string name="sync_failed_try_again">Sync failed. Please check your network and try again later.</string><!-- 根据后台文字整理 -->
 	<string name="select_right_date_toast">Please select a date that is earlier than today</string>
 	<string name="bmi_result_suggest_start">Normal weight for your height (%s):\n</string>
-	<string name="bmi_range_normal_adult_description">Congratulations! You\'re in a great place now. Keep up your healthy habits to maintain your healthy weight.</string>
+	<string name="bmi_range_normal_adult_description">👍 Congratulations! You\'re in a great place now. Keep up your healthy habits to maintain your healthy weight.</string>
 	<string name="habit_morning">Morning</string>
 
 	<string name="app_recommend_30_day">30 Day Fitness Challenge - Workout at Home</string>
@@ -139,7 +143,7 @@
 	<string name="app_recommend_six_pack">Six Pack in 30 Days - Abs Workout</string>
 	<string name="app_recommend_walking">Walking App - Walking for Weight Loss</string>
 	<string name="app_recommend_women">Lose Weight App for Women - Workout at Home</string>
-	<string name="bmi_range_normal_child_description">Thumbs Up! You\'ve done a great job and now only need to maintain your healthy lifestyle to stay in this range.</string>
+	<string name="bmi_range_normal_child_description">👍 Thumbs Up! You\'ve done a great job and now only need to maintain your healthy lifestyle to stay in this range.</string>
 	<string name="data_sync_adjust_toast">Due to Google\'s request, we now need to adjust our data sync function, which will be temporarily unavailable during this period.\n\nThe function will be back soon. We\'d greatly appreciate your patience.</string><!-- 多语言是google的 -->
 	<string name="sorry_for_inconvenience">Sorry for the inconvenience</string><!-- 根据thx_feedback_tip整理 -->
 	<string name="done">Done</string>
