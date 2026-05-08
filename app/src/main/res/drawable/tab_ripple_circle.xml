@@ -1,0 +1,13 @@
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#20000000"> <item>
+    <inset
+        android:insetLeft="10dp"
+        android:insetRight="10dp"
+        android:insetTop="-20dp"
+        android:insetBottom="-20dp">
+        <shape android:shape="oval">
+            <solid android:color="@android:color/white" />
+        </shape>
+    </inset>
+</item>
+</ripple>

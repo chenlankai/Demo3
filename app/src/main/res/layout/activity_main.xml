@@ -6,14 +6,13 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- 内容区域：ViewPager2 -->
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- 底部 TabLayout -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
@@ -25,6 +24,8 @@
         android:background="#FFFFFF"
         app:tabIndicatorColor="#4A61D1"
         app:tabTextAppearance="@style/TabTextStyle"
+        app:tabBackground="@drawable/tab_ripple_circle"
+        app:tabRippleColor="@null"
         app:tabIconTint="@null" />
 
 </LinearLayout>
