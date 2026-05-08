@@ -12,21 +12,18 @@ import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
 import kotlin.math.cos
 import kotlin.math.sin
 
-/**
- * BMI 仪表盘自定义 View
- * 实现功能：动态区间色块、刻度文字绘制、带动画的指针旋转、边界溢出保护
- */
+
 class BmiGaugeView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     var onBmiChangeListener: ((Float) -> Unit)? = null
 
     private var sections: List<BmiConfigManager.BmiSection> = emptyList()
-    private var currentBmi = 22f
+    private var currentBmi = 0f
     private var minBmi = 15f
     private var maxBmi = 41f
 
-    // 指针当前的实时角度：180f(最左) -> 270f(正顶) -> 360f(最右)
+
     private var animatedAngle = 180f
     private var pointerAnimator: ValueAnimator? = null
 
@@ -65,38 +62,56 @@ class BmiGaugeView @JvmOverloads constructor(
         this.maxBmi = config.second.second
         invalidate()
     }
+    
+    fun resetState() {
+        pointerAnimator?.cancel()
+        animatedAngle = 180f
+        currentBmi = 0f
+        onBmiChangeListener?.invoke(0f)
+        invalidate()
+    }
 
-    fun setBmi(value: Float) {
+    fun setBmi(value: Float, animate: Boolean = true) {
         val targetBmi = value.coerceIn(minBmi, maxBmi)
 
+        if (!animate) {
+            pointerAnimator?.cancel()
+            currentBmi = targetBmi
+            val ratio = (targetBmi - minBmi) / (maxBmi - minBmi)
+            animatedAngle = 180f + (ratio * 180f)
+            onBmiChangeListener?.invoke(targetBmi)
+            invalidate()
+            return
+        }
 
-        val startBmi = 0
+        // 1. 立即停止旧动画并强制同步重置状态到起点
+        // 这一步是消除“跳动感”的关键：确保在进入新一轮绘制前状态已就绪
+        resetState()
 
+        // 2. 准备增长动画的目标参数
         val ratio = (targetBmi - minBmi) / (maxBmi - minBmi)
         val targetAngle = 180f + (ratio * 180f)
-        val startAngle = animatedAngle
 
-        pointerAnimator?.cancel()
-        pointerAnimator = ValueAnimator.ofFloat(0f, 1f).apply { // 改为 0 到 1 的进度因子
-            duration = 2000
+        // 3. 直接启动从 0 开始的增长动画
+        pointerAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 1000
             interpolator = DecelerateInterpolator()
             addUpdateListener { animation ->
                 val fraction = animation.animatedValue as Float
 
-                // 1. 更新指针角度
-                animatedAngle = startAngle + (targetAngle - startAngle) * fraction
+                // 动画始终基于固定的起点 (180f / 0f) 进行计算
+                animatedAngle = 180f + (targetAngle - 180f) * fraction
+                val frameBmi = 0f + (targetBmi - 0f) * fraction
+                currentBmi = frameBmi
 
-                // 2. 计算当前帧的 BMI 值
-                val frameBmi = startBmi + (targetBmi - startBmi) * fraction
-                currentBmi = frameBmi // 更新 View 内部的当前值
-
-                // 3. 通过接口通知 Activity 更新 TextView
                 onBmiChangeListener?.invoke(frameBmi)
-
                 invalidate()
             }
             start()
         }
+        
+        // 立即触发重绘，确保哪怕动画第一帧未到，画面也已处于 0 位
+        invalidate()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -185,8 +200,8 @@ class BmiGaugeView @JvmOverloads constructor(
         val drawable = pointerDrawable ?: return
         canvas.save()
 
-        // 旋转校准：111f 补偿使图片在 animatedAngle=180 时水平向左
-        canvas.rotate(animatedAngle + 111f, cx, cy)
+        // 旋转校准：111.5f 补偿使图片在 animatedAngle=180 时水平向左
+        canvas.rotate(animatedAngle + 111.5f, cx, cy)
 
         val pWidth = drawable.intrinsicWidth.toFloat()
         val pHeight = drawable.intrinsicHeight.toFloat()

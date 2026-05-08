@@ -12,6 +12,9 @@ interface BmiDao {
     @Query("SELECT * FROM bmi_records ORDER BY id DESC")
     fun getAllRecords(): Flow<List<BmiRecord>>
 
+    @Query("SELECT * FROM bmi_records ORDER BY id DESC LIMIT 1")
+    suspend fun getLatestRecord(): BmiRecord?
+
     @Delete
     suspend fun deleteRecord(record: BmiRecord)
 }
