@@ -23,12 +23,17 @@ class MainActivity : AppCompatActivity() {
         val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
         val viewPager = findViewById<ViewPager2>(R.id.viewPager)
 
-        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
+        /*ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             // 左右应用间距
             rootLayout.updatePadding(left = systemBars.left, right = systemBars.right)
             // 底部由 TabLayout 承担
             tabLayout.updatePadding(bottom = systemBars.bottom)
+            insets
+        }*/
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
+            val bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+            view.updatePadding(bottom = bottomInset)
             insets
         }
 
@@ -55,5 +60,6 @@ class MainActivity : AppCompatActivity() {
 
             }
         }.attach()
+        viewPager.isUserInputEnabled = false
     }
 }

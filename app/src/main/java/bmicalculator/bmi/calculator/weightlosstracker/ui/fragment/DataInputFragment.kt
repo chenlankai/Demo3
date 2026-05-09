@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import bmicalculator.bmi.calculator.weightlosstracker.R
@@ -63,11 +64,11 @@ class DataInputFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        // 如果在 Fragment 中不需要顶部的 header，可以隐藏或者根据容器动态调整
-        // binding.headerLayout.visibility = View.GONE 
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.headerLayout) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+
             v.updatePadding(top = systemBars.top)
             insets
         }
@@ -390,11 +391,16 @@ class DataInputFragment : Fragment() {
     private fun showDatePickerDialog() {
         val dialog = BottomSheetDialog(requireContext())
         dialog.behavior.isDraggable = false
-        dialog.window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(Color.TRANSPARENT)
 
         val dialogBinding = bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDatePickerBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.root)
+
+        dialog.setOnShowListener {
+            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            bottomSheet?.let {
+                it.setBackgroundColor(Color.WHITE)
+            }
+        }
 
         val calendar = Calendar.getInstance()
         val today = Calendar.getInstance()
@@ -447,17 +453,22 @@ class DataInputFragment : Fragment() {
             binding.tvData.text = "${allMonths[monthIdx]} $day, $year"
             dialog.dismiss()
         }
+
         dialog.show()
     }
 
     private fun showTimePickerDialog() {
         val dialog = BottomSheetDialog(requireContext())
         dialog.behavior.isDraggable = false
-        dialog.window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            ?.setBackgroundColor(Color.TRANSPARENT)
 
         val dialogBinding = DialogTimePickerBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.root)
+        dialog.setOnShowListener {
+            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            bottomSheet?.let {
+                it.setBackgroundColor(Color.WHITE)
+            }
+        }
 
         val currentText = binding.tvAfternoon.text.toString()
         val initialPosition = timeOptions.indexOf(currentText).coerceAtLeast(0)
