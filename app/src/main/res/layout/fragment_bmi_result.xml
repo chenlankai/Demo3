@@ -162,6 +162,7 @@
                 android:layout_marginTop="20dp"
                 android:paddingStart="15dp"
                 android:paddingEnd="30dp"
+                android:visibility="gone"
                 tools:listitem="@layout/item_bmi_range"
                 app:layout_constraintTop_toBottomOf="@+id/tvMessage"
                 app:layout_constraintStart_toStartOf="parent"
@@ -185,6 +186,49 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/rvStatus" />
+
+            <View
+                android:id="@+id/DivideLine"
+                android:layout_width="0dp"
+                android:layout_height="0.5dp"
+
+                android:layout_marginTop="30dp"
+
+                android:layout_marginStart="22.5dp"
+                android:layout_marginEnd="22.5dp"
+
+                android:background="#000000"
+
+                android:alpha="1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvDescription"/>
+
+            <TextView
+                android:id="@+id/tvNeedApp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Apps you might need"
+                android:fontFamily="@font/montserrat_extrabold"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                android:layout_marginTop="24.5dp"
+                app:layout_constraintStart_toStartOf="@+id/DivideLine"
+                app:layout_constraintTop_toBottomOf="@+id/DivideLine"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvRecommend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:paddingBottom="100dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:layout_marginTop="14.5dp"
+                tools:listitem="@layout/item_recommend_app"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constraintStart_toStartOf="@+id/tvNeedApp"
+                app:layout_constraintTop_toBottomOf="@+id/tvNeedApp"/>
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

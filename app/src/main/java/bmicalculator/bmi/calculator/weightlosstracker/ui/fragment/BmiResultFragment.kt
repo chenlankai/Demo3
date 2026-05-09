@@ -27,6 +27,7 @@ import bmicalculator.bmi.calculator.weightlosstracker.databinding.FragmentBmiRes
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDeleteConfirmBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MainActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.BmiRangeAdapter
+import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.RecommendAppAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
 import bmicalculator.bmi.calculator.weightlosstracker.util.CustomTypefaceSpan
 import kotlinx.coroutines.flow.first
@@ -38,6 +39,7 @@ class BmiResultFragment : Fragment() {
     private var _binding: FragmentBmiResultBinding? = null
     private val binding get() = _binding!!
     private val rangeAdapter = BmiRangeAdapter()
+    private lateinit var recommendAdapter: RecommendAppAdapter
 
     private val regularTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_regular) }
     private val extraBoldTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_extrabold) }
@@ -54,7 +56,6 @@ class BmiResultFragment : Fragment() {
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            // 如果 Toolbar 可见，则 Toolbar 承担顶部边距，否则让内容区域（或者 root）承担
             if (binding.layoutToolbar.isVisible) {
                 binding.layoutToolbar.updatePadding(top = systemBars.top)
                 v.updatePadding(top = 0)
@@ -64,15 +65,54 @@ class BmiResultFragment : Fragment() {
             insets
         }
 
+        val hideDescription = arguments?.getBoolean("hide_description", false) ?: false
+        if (hideDescription) {
+            binding.tvDescription.visibility = View.GONE
+        } else {
+            binding.tvDescription.visibility = View.VISIBLE
+        }
+
         setupRecyclerView()
+        setupRecommendRecyclerView()
         setupListeners()
-        // 数据加载逻辑统一移至 onResume 处理，避免生命周期交替导致的动画重置问题
     }
 
     private fun setupRecyclerView() {
         binding.rvStatus.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = rangeAdapter
+            isNestedScrollingEnabled = false
+        }
+    }
+
+    private fun setupRecommendRecyclerView() {
+        val recommendApps = listOf(
+            RecommendAppAdapter.RecommendAppModel(
+                "Home Workout - No Equipments",
+                "Weight Loss, Lose Belly Fat",
+                R.drawable.icon_recommend_s5,
+                "4.9",
+                "homeworkout.homeworkouts.noequipment"
+            ),
+            RecommendAppAdapter.RecommendAppModel(
+                "Lose Weight for Men",
+                "Weight Loss in 30 Days",
+                R.drawable.icon_recommend_s5,
+                "4.8",
+                "com.popularapp.loseweightapp"
+            ),
+            RecommendAppAdapter.RecommendAppModel(
+                "Six Pack in 30 Days",
+                "Abs Workout",
+                R.drawable.icon_recommend_s5,
+                "4.9",
+                "com.leapfitness.sixpackabs"
+            )
+        )
+        recommendAdapter = RecommendAppAdapter(recommendApps)
+        binding.rvRecommend.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = recommendAdapter
             isNestedScrollingEnabled = false
         }
     }
