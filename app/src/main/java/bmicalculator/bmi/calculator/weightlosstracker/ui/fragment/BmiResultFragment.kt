@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -95,18 +96,18 @@ class BmiResultFragment : Fragment() {
                 "homeworkout.homeworkouts.noequipment"
             ),
             RecommendAppAdapter.RecommendAppModel(
-                "Lose Weight for Men",
-                "Weight Loss in 30 Days",
-                R.drawable.icon_recommend_s5,
-                "4.8",
-                "com.popularapp.loseweightapp"
-            ),
-            RecommendAppAdapter.RecommendAppModel(
-                "Six Pack in 30 Days",
-                "Abs Workout",
+                "Home Workout - No Equipments",
+                "Weight Loss, Lose Belly Fat",
                 R.drawable.icon_recommend_s5,
                 "4.9",
-                "com.leapfitness.sixpackabs"
+                "homeworkout.homeworkouts.noequipment"
+            ),
+            RecommendAppAdapter.RecommendAppModel(
+                "Home Workout - No Equipments",
+                "Weight Loss, Lose Belly Fat",
+                R.drawable.icon_recommend_s5,
+                "4.9",
+                "homeworkout.homeworkouts.noequipment"
             )
         )
         recommendAdapter = RecommendAppAdapter(recommendApps)
@@ -125,16 +126,47 @@ class BmiResultFragment : Fragment() {
         binding.tvSave.setOnClickListener {
             saveBmiRecord()
         }
+
+        binding.tvRecent.setOnClickListener {
+            startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.HistoryActivity::class.java))
+        }
     }
 
     private fun showPassedData(args: Bundle, animate: Boolean = true) {
         // Standalone 模式 UI 控制
-        binding.tvDiscard.isVisible = true
-        binding.tvBMI.isVisible = false
-        binding.tvToolbarDate.isVisible = false
-        binding.tvRecent.isVisible = false
+
+        binding.ActionBar1.isVisible = true
+        binding.ActionBar2.isVisible = false
+        binding.ActionBar3.isVisible = false
+
+
+
+
         binding.tvSave.isVisible = true
         binding.layoutToolbar.isVisible = true
+
+        lifecycleScope.launch {
+            val hasRecords = AppDatabase.getDatabase(requireContext()).bmiDao().getLatestRecord() != null
+
+            if (!hasRecords) {
+                // 第一次计算（数据库无记录）：显示 rvStatus，隐藏推荐
+                Log.d("","数据库无记录")
+                binding.rvStatus.isVisible = true
+                binding.DivideLine.isVisible = false
+                binding.tvNeedApp.isVisible = false
+                binding.rvRecommend.isVisible = false
+                binding.tvDateTime.isVisible = false
+            } else {
+                // 不是第一次计算：隐藏 rvStatus，显示推荐
+                Log.d("","数据库无记录")
+                binding.rvStatus.isVisible = false
+                binding.DivideLine.isVisible = true
+                binding.tvNeedApp.isVisible = true
+                binding.rvRecommend.isVisible = true
+                binding.tvDateTime.isVisible = false
+            }
+        }
+        binding.tvDescription.isVisible = true
 
         val bmi = args.getFloat("EXTRA_BMI")
         val gender = args.getInt("EXTRA_GENDER")
@@ -151,12 +183,20 @@ class BmiResultFragment : Fragment() {
 
     private fun loadLatestFromDatabase(animate: Boolean = false) {
         // Tab 模式 UI 控制
+        binding.ActionBar1.isVisible = false
+        binding.ActionBar2.isVisible = true
+        binding.ActionBar3.isVisible = false
+
+
         binding.tvSave.isVisible = false
-        binding.tvDiscard.isVisible = false
-        binding.tvBMI.isVisible = true
-        binding.tvToolbarDate.isVisible = true
-        binding.tvRecent.isVisible = true
+
         binding.layoutToolbar.isVisible = true
+
+        binding.tvDescription.isVisible = false
+        binding.DivideLine.isVisible = false
+        binding.tvNeedApp.isVisible = false
+        binding.rvRecommend.isVisible = false
+        binding.tvDateTime.isVisible = false
         
         // 确保 Insets 正确应用
         binding.root.requestApplyInsets()
@@ -329,17 +369,14 @@ class BmiResultFragment : Fragment() {
         
         val args = arguments
         if (args != null && args.containsKey("EXTRA_BMI")) {
-            // 情况 A: 从计算页面跳转（带有结果数据）-> 仅在此处触发动画
             showPassedData(args, true)
         } else {
-            // 情况 B: 主页 Tab 展示（加载数据库最新记录）-> 永远静默更新
             loadLatestFromDatabase(false)
         }
     }
 
     override fun onPause() {
         super.onPause()
-        // 仅停止动画，不主动重置到 0，避免在 Activity 退出过渡时出现视觉上的“数值闪降”
         if (_binding != null) {
             binding.bmiGauge.onBmiChangeListener = null
         }
