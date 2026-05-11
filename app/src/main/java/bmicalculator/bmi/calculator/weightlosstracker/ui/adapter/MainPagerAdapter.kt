@@ -6,6 +6,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.fragment.BmiResultFragment
 import bmicalculator.bmi.calculator.weightlosstracker.ui.fragment.DataInputFragment
+import bmicalculator.bmi.calculator.weightlosstracker.ui.fragment.StatisticsFragment
 
 class MainPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
     override fun getItemCount(): Int = 3
@@ -18,7 +19,7 @@ class MainPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activi
                     putBoolean("hide_description", true)
                 }
             }
-            2 -> Fragment() // Statistics placeholder
+            2 -> StatisticsFragment()
             else -> DataInputFragment()
         }
     }

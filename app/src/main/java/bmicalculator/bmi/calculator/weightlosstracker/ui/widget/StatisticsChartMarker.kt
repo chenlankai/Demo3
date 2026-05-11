@@ -17,7 +17,7 @@ class StatisticsChartMarker(context: Context, layoutResource: Int, private val u
         tvContent.text = if (unit.isEmpty()) {
             String.format(Locale.US, "%.1f", e.y)
         } else {
-            String.format(Locale.US, "%.2f %s", e.y, unit)
+            String.format(Locale.US, "%.1f %s", e.y, unit)
         }
         super.refreshContent(e, highlight)
     }
