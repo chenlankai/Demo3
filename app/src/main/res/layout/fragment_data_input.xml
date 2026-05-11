@@ -17,7 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="15dp"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="0dp"
             android:layout_marginBottom="18dp"
             android:fontFamily="@font/montserrat_extrabold"
             android:gravity="center"
@@ -35,9 +35,9 @@
             android:gravity="center"
             android:src="@drawable/icon_general_me"
             android:contentDescription="@string/mine"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/tvTitleCalculator"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@+id/tvTitleCalculator" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 <!--    androidx.core.widget.NestedScrollView -->

@@ -17,6 +17,11 @@ class BmiGaugeView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     var onBmiChangeListener: ((Float) -> Unit)? = null
+    var showPointer: Boolean = true
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     private var sections: List<BmiConfigManager.BmiSection> = emptyList()
     private var currentBmi = 0f
@@ -175,7 +180,9 @@ class BmiGaugeView @JvmOverloads constructor(
         }
 
         // 3. 绘制指针
-        drawIconPointer(canvas, centerX, centerY, radius, sw)
+        if (showPointer) {
+            drawIconPointer(canvas, centerX, centerY, radius, sw)
+        }
     }
 
     private fun drawSlantedLabel(canvas: Canvas, text: String, angle: Float, cx: Float, cy: Float, radius: Float, sw: Float) {

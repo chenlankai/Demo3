@@ -25,7 +25,7 @@
                 android:paddingStart="15.5dp"
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
-                android:text="Discard"
+                android:text="@string/discard"
                 android:textColor="#2C2C2E"
                 android:textSize="16sp"
                 android:visibility="visible"
@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:textColor="#000000"
-                android:text="BMI"
+                android:text="@string/bmi"
                 android:fontFamily="@font/montserrat_extrabold"
                 android:textSize="24sp"
 
@@ -72,7 +72,7 @@
                 android:id="@+id/tvRecent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Recent"
+                android:text="@string/recent"
                 android:textColor="#3659CF"
                 android:textSize="16sp"
                 android:fontFamily="@font/montserrat_regular"
@@ -103,7 +103,7 @@
                 android:id="@+id/tv_ActionBar3_Delete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Delete"
+                android:text="@string/delete"
                 android:layout_marginEnd="15dp"
                 android:textColor="#000000"
                 android:textSize="16sp"
@@ -181,6 +181,11 @@
                 android:includeFontPadding="false"
                 android:gravity="center"
                 android:layout_marginTop="5dp"
+
+                android:drawableEnd="@drawable/help_circle"
+                android:drawablePadding="4.5dp"
+                android:drawableTint="#FFFFFF"
+
                 app:layout_constraintTop_toBottomOf="@id/tvBmiValue"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />

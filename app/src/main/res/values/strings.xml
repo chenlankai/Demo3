@@ -117,7 +117,7 @@
 	<string name="afternoon">Afternoon</string>
 	<string name="evening">Evening</string>
 	<!--	这个要改-->
-	<string name="morning">habit_morning</string>
+	<string name="morning">Morning</string>
 	<string name="night">Night</string><!-- 从sleep sounds拿的，用于BMI的时间段，简体和繁体是根据BMI需要的意思修改的 -->
 	<string name="phone_memery_low_1">Only %1$sM of space left. Please delete some files to make sure there is at least %2$sM.</string>
 	<string name="today">Today</string>

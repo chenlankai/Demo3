@@ -5,7 +5,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.text.style.ForegroundColorSpan
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -15,13 +14,13 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.fragment.app.viewModels
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
@@ -30,11 +29,9 @@ import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDeleteCo
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MainActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.BmiRangeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.RecommendAppAdapter
+import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.BmiResultViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
-import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
 import bmicalculator.bmi.calculator.weightlosstracker.util.CustomTypefaceSpan
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import java.util.*
 
 class BmiResultFragment : Fragment() {
@@ -43,6 +40,10 @@ class BmiResultFragment : Fragment() {
     private val binding get() = _binding!!
     private val rangeAdapter = BmiRangeAdapter()
     private lateinit var recommendAdapter: RecommendAppAdapter
+
+    private val viewModel: BmiResultViewModel by viewModels {
+        BmiResultViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
+    }
 
     private val regularTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_regular) }
     private val extraBoldTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_extrabold) }
@@ -69,15 +70,151 @@ class BmiResultFragment : Fragment() {
         }
 
         val hideDescription = arguments?.getBoolean("hide_description", false) ?: false
-        if (hideDescription) {
-            binding.tvDescription.visibility = View.GONE
-        } else {
-            binding.tvDescription.visibility = View.VISIBLE
-        }
+        binding.tvDescription.isVisible = !hideDescription
 
         setupRecyclerView()
         setupRecommendRecyclerView()
         setupListeners()
+        observeViewModel()
+        
+        viewModel.loadData(arguments)
+    }
+
+    private fun observeViewModel() {
+        viewModel.uiState.observe(viewLifecycleOwner) { state ->
+            updateUI(state)
+        }
+    }
+
+    private fun updateUI(state: BmiResultViewModel.BmiResultState) {
+        if (state.isStandaloneMode) {
+            setupStandaloneUI(state)
+        } else {
+            setupTabUI(state)
+        }
+
+        displayBmiResult(state)
+    }
+
+    private fun setupStandaloneUI(state: BmiResultViewModel.BmiResultState) {
+        binding.ActionBar1.isVisible = !state.isHistoryMode
+        binding.ActionBar2.isVisible = false
+        binding.ActionBar3.isVisible = state.isHistoryMode
+
+        binding.tvSave.isVisible = !state.isHistoryMode
+        binding.layoutToolbar.isVisible = true
+        binding.tvDescription.isVisible = true
+
+        if (state.isHistoryMode) {
+            binding.rvStatus.isVisible = false
+            binding.DivideLine.isVisible = true
+            binding.tvNeedApp.isVisible = true
+            binding.rvRecommend.isVisible = true
+            binding.tvDateTime.isVisible = true
+            
+            val localizedTime = when (state.time) {
+                "Morning" -> getString(R.string.morning)
+                "Afternoon" -> getString(R.string.afternoon)
+                "Evening" -> getString(R.string.evening)
+                "Night" -> getString(R.string.night)
+                else -> state.time
+            }
+            binding.tvDateTime.text = "${state.date} $localizedTime"
+        } else {
+            val hasRecords = state.hasDatabaseRecords
+            binding.rvStatus.isVisible = !hasRecords
+            binding.DivideLine.isVisible = hasRecords
+            binding.tvNeedApp.isVisible = hasRecords
+            binding.rvRecommend.isVisible = hasRecords
+            binding.tvDateTime.isVisible = false
+        }
+    }
+
+    private fun setupTabUI(state: BmiResultViewModel.BmiResultState) {
+        binding.ActionBar1.isVisible = false
+        binding.ActionBar2.isVisible = true
+        binding.ActionBar3.isVisible = false
+        binding.tvSave.isVisible = false
+        binding.layoutToolbar.isVisible = true
+        binding.tvDescription.isVisible = false
+        binding.DivideLine.isVisible = false
+        binding.tvNeedApp.isVisible = false
+        binding.rvRecommend.isVisible = false
+        binding.tvDateTime.isVisible = false
+
+        if (state.recordId != -1L || state.bmi > 0) {
+            binding.scrollView.isVisible = true
+            binding.tvToolbarDate.text = state.date
+        } else {
+            binding.scrollView.isVisible = false
+        }
+        binding.root.requestApplyInsets()
+    }
+
+    private fun displayBmiResult(state: BmiResultViewModel.BmiResultState) {
+        binding.bmiGauge.onBmiChangeListener = { animatedValue ->
+            binding.tvBmiValue.text = String.format(Locale.US, "%.1f", animatedValue)
+        }
+        binding.bmiGauge.updateConfig(state.gender, state.age)
+        // 仅在计算结果的独立模式且非历史查看状态下显示动画，在 Tab 切换或查看记录时直接定位
+        val shouldAnimate = state.isStandaloneMode && !state.isHistoryMode
+        binding.bmiGauge.setBmi(state.bmi, shouldAnimate)
+
+        val shouldHelpCircle =  state.isStandaloneMode || state.isHistoryMode
+
+        if (shouldHelpCircle && state.hasDatabaseRecords) {
+            binding.tvStatus.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.help_circle, 0)
+        } else {
+            binding.tvStatus.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
+        }
+
+        state.currentSection?.let {
+            binding.tvStatus.text = it.categoryName
+            try {
+                binding.tvStatus.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(it.color))
+            } catch (e: Exception) {}
+        }
+
+        val genderStr = if (state.gender == 0) getString(R.string.male) else getString(R.string.female)
+        val weightStrFormatted = String.format(Locale.US, "%.2f", state.weightVal)
+        val hVal1StrFormatted = if (state.hUnit == "cm") String.format(Locale.US, "%.1f", state.hVal1) else String.format(Locale.US, "%.0f", state.hVal1)
+        val hVal2StrFormatted = state.hVal2.toString()
+
+        val heightStrForMsg = if (state.hUnit == "ft+in") {
+            getString(R.string.bmi_height_ft_in_format, hVal1StrFormatted, hVal2StrFormatted)
+        } else {
+            getString(R.string.bmi_height_cm_format, hVal1StrFormatted)
+        }
+        binding.tvMessage.text = getString(R.string.bmi_input_data, "$weightStrFormatted ${state.weightUnit}", heightStrForMsg, genderStr, state.age.toString())
+
+        val shortMessage = getString(R.string.bmi_range_normal_adult_description)
+        val isNormal = state.currentSection?.categoryName.equals("Normal", ignoreCase = true)
+
+        binding.tvDescription.text = if (isNormal) {
+            buildSpannedString {
+                inSpans(CustomTypefaceSpan(regularTypeface!!), ForegroundColorSpan(colorBlack)) { append(shortMessage) }
+            }
+        } else {
+
+            val rangeStart = getString(R.string.bmi_result_suggest_start, heightStrForMsg)
+
+            val rangeText = getString(R.string.bmi_range_format, state.minIdealWeight, state.weightUnit, state.maxIdealWeight, state.weightUnit)
+            buildSpannedString {
+                inSpans(CustomTypefaceSpan(regularTypeface!!), ForegroundColorSpan(colorBlack)) { append("$rangeStart ") }
+                inSpans(CustomTypefaceSpan(extraBoldTypeface!!), ForegroundColorSpan(colorBlack)) { append(rangeText) }
+                when {
+                    state.weightVal > state.maxIdealWeight -> {
+                        val loseText = getString(R.string.bmi_weight_lose_format, state.weightVal - state.maxIdealWeight, state.weightUnit)
+                        inSpans(CustomTypefaceSpan(extraBoldTypeface!!), ForegroundColorSpan(colorRed)) { append(loseText) }
+                    }
+                    state.weightVal < state.minIdealWeight -> {
+                        val gainText = getString(R.string.bmi_weight_gain_format, state.minIdealWeight - state.weightVal, state.weightUnit)
+                        inSpans(CustomTypefaceSpan(extraBoldTypeface!!), ForegroundColorSpan(colorRed)) { append(gainText) }
+                    }
+                }
+            }
+        }
+        rangeAdapter.setData(state.sections, state.bmi)
     }
 
     private fun setupRecyclerView() {
@@ -121,9 +258,7 @@ class BmiResultFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.tvStatus.setOnClickListener {
-            ViewModelProvider(requireActivity())[MainViewModel::class.java].selectTab(0)
-        }
+
         binding.ivActionBar3ArrowLeft.setOnClickListener {
             requireActivity().finish()
         }
@@ -139,227 +274,90 @@ class BmiResultFragment : Fragment() {
         }
 
         binding.tvRecent.setOnClickListener {
-            startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.HistoryActivity::class.java))
-        }
-    }
-
-    private fun showPassedData(args: Bundle, animate: Boolean = true) {
-        // Standalone 模式 UI 控制
-        binding.ActionBar1.isVisible = true
-        binding.ActionBar2.isVisible = false
-        binding.ActionBar3.isVisible = false
-
-        binding.tvSave.isVisible = true
-        binding.layoutToolbar.isVisible = true
-
-        lifecycleScope.launch {
-            val hasRecords = AppDatabase.getDatabase(requireContext()).bmiDao().getLatestRecord() != null
-            val historyBmi = args.getBoolean("history_bmi", false)
-            if (historyBmi) {
-                binding.ActionBar1.isVisible = false
-                binding.ActionBar2.isVisible = false
-                binding.ActionBar3.isVisible = true
-
-                binding.rvStatus.isVisible = false
-                binding.DivideLine.isVisible = true
-                binding.tvNeedApp.isVisible = true
-                binding.rvRecommend.isVisible = true
-                binding.tvDateTime.isVisible = true
-                binding.tvSave.isVisible = false
-                
-                binding.tvDateTime.text = "${args.getString("EXTRA_DATE")} ${args.getString("EXTRA_TIME")}"
-            }
-            else if (!hasRecords) {
-
-                Log.d("","数据库无记录")
-                binding.rvStatus.isVisible = true
-                binding.DivideLine.isVisible = false
-                binding.tvNeedApp.isVisible = false
-                binding.rvRecommend.isVisible = false
-                binding.tvDateTime.isVisible = false
+            val state = viewModel.uiState.value
+            if (state?.hasDatabaseRecords == true) {
+                startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.HistoryActivity::class.java))
             } else {
-
-                Log.d("","数据库无记录")
-                binding.rvStatus.isVisible = false
-                binding.DivideLine.isVisible = true
-                binding.tvNeedApp.isVisible = true
-                binding.rvRecommend.isVisible = true
-                binding.tvDateTime.isVisible = false
+                // 如果没有记录，回到初始动画结束后的第一个页面 (DataInputActivity，填满屏幕)
+                startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                })
+                requireActivity().finish()
             }
         }
-        binding.tvDescription.isVisible = true
 
-        val bmi = args.getFloat("EXTRA_BMI")
-        val gender = args.getInt("EXTRA_GENDER")
-        val age = args.getInt("EXTRA_AGE")
-        val heightM = args.getFloat("EXTRA_HEIGHT_M")
-        val weightVal = args.getFloat("EXTRA_WEIGHT_VAL")
-        val weightUnit = args.getString("EXTRA_WEIGHT_UNIT") ?: "kg"
-        val hVal1 = args.getFloat("EXTRA_HEIGHT_VAL1")
-        val hVal2 = args.getInt("EXTRA_HEIGHT_VAL2")
-        val hUnit = args.getString("EXTRA_HEIGHT_UNIT") ?: "cm"
+        binding.tvStatus.setOnClickListener {
+            val state = viewModel.uiState.value ?: return@setOnClickListener
+            val hasIcon = (state.isStandaloneMode || state.isHistoryMode) && state.hasDatabaseRecords
 
-        displayBmiResult(bmi, gender, age, heightM, weightVal, weightUnit, hVal1, hVal2, hUnit, animate)
-    }
-
-    private fun loadLatestFromDatabase(animate: Boolean = false) {
-        // Tab 模式 UI 控制
-        binding.ActionBar1.isVisible = false
-        binding.ActionBar2.isVisible = true
-        binding.ActionBar3.isVisible = false
-
-
-        binding.tvSave.isVisible = false
-
-        binding.layoutToolbar.isVisible = true
-
-        binding.tvDescription.isVisible = false
-        binding.DivideLine.isVisible = false
-        binding.tvNeedApp.isVisible = false
-        binding.rvRecommend.isVisible = false
-        binding.tvDateTime.isVisible = false
-        
-        // 确保 Insets 正确应用
-        binding.root.requestApplyInsets()
-
-        lifecycleScope.launch {
-            val record = AppDatabase.getDatabase(requireContext()).bmiDao().getLatestRecord()
-            if (record != null) {
-                binding.scrollView.visibility = View.VISIBLE
-                binding.tvToolbarDate.text = record.date
-
-
-                val heightM = if (record.heightUnit == "cm") {
-                    (record.heightCm ?: 0f) / 100f
-                } else {
-                    val totalInches = (record.heightFt ?: 0) * 12 + (record.heightIn ?: 0)
-                    totalInches * 0.0254f
-                }
-
-                val weightKg = if (record.weightUnit == "lb") {
-                    record.weight * 0.45359237f
-                } else {
-                    record.weight
-                }
-                
-                val bmi = if (heightM > 0) weightKg / (heightM * heightM) else 0f
-                
-                displayBmiResult(
-                    bmi, 
-                    if (record.gender == "Male") 0 else 1,
-                    record.age,
-                    heightM,
-                    record.weight,
-                    record.weightUnit,
-                    if (record.heightUnit == "cm") record.heightCm ?: 0f else (record.heightFt ?: 0).toFloat(),
-                    record.heightIn ?: 0,
-                    record.heightUnit,
-                    animate
-                )
-            } else {
-                // 没有数据时可以隐藏内容或显示提示
-                binding.scrollView.visibility = View.GONE
+            if (!state.isStandaloneMode) {
+                ViewModelProvider(requireActivity())[MainViewModel::class.java].selectTab(0)
+            } else if (hasIcon) {
+                showBmiInfoDialog()
             }
         }
     }
 
-    private fun displayBmiResult(
-        bmi: Float, gender: Int, age: Int, heightM: Float,
-        weightVal: Float, weightUnit: String, hVal1: Float, hVal2: Int, hUnit: String,
-        animate: Boolean = true
-    ) {
-        binding.bmiGauge.onBmiChangeListener = { animatedValue ->
-            binding.tvBmiValue.text = String.format(Locale.US, "%.1f", animatedValue)
+    private fun showBmiInfoDialog() {
+        val state = viewModel.uiState.value ?: return
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext(), R.style.TransparentBottomSheetDialogTheme)
+        val view = layoutInflater.inflate(R.layout.dialog_bmi_info, null)
+        dialog.setContentView(view)
+        dialog.behavior.apply {
+            this.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            this.skipCollapsed = true
         }
-        binding.bmiGauge.updateConfig(gender, age)
-        binding.bmiGauge.setBmi(bmi, animate)
+        // 设置弹窗中的数据
+        val gaugeView = view.findViewById<bmicalculator.bmi.calculator.weightlosstracker.ui.widget.BmiGaugeView>(R.id.bmiGauge)
+        val rvStatus = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvStatus)
+        val tvTip = view.findViewById<android.widget.TextView>(R.id.tv_bmi_tip)
+        val tvTipValue = view.findViewById<android.widget.TextView>(R.id.tv_bmi_tip_value)
+        val btnGotIt = view.findViewById<android.widget.TextView>(R.id.btn_got_it)
 
-        val (sections, _) = BmiConfigManager.getConfiguration(gender, age)
-        val currentSection = sections.find { bmi >= (it.minRange ?: Float.MIN_VALUE) && bmi < (it.maxRange ?: Float.MAX_VALUE) } 
-            ?: sections.lastOrNull()
+        gaugeView.showPointer = false
+        gaugeView.updateConfig(state.gender, state.age)
+        gaugeView.setBmi(state.bmi, false)
 
-        currentSection?.let {
-            binding.tvStatus.text = it.categoryName
-            try {
-                binding.tvStatus.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(it.color))
-            } catch (e: Exception) {}
-        }
+        val rangeAdapter = BmiRangeAdapter()
+        rvStatus.layoutManager = LinearLayoutManager(requireContext())
+        rvStatus.adapter = rangeAdapter
+        rangeAdapter.setData(state.sections, state.bmi)
 
-        // 理想体重逻辑
-        val normalSection = sections.find { it.categoryName == "Normal" }
-        val minIdealBmi = normalSection?.minRange ?: 18.5f
-        val maxIdealBmi = normalSection?.maxRange ?: 25.0f
-        var minWeight = minIdealBmi * heightM * heightM
-        var maxWeight = maxIdealBmi * heightM * heightM
-        if (weightUnit == "lb") {
-            minWeight /= 0.45359237f
-            maxWeight /= 0.45359237f
-        }
+        val genderStr = if (state.gender == 0) getString(R.string.male) else getString(R.string.female)
+        tvTipValue.text = getString(R.string.bmi_teenager_info_tip, state.age.toString(), genderStr)
 
-        val genderStr = if (gender == 0) getString(R.string.male) else getString(R.string.female)
-        
-        val weightStrFormatted = String.format(Locale.US, if (weightUnit == "lb") "%.2f" else "%.2f", weightVal)
-        val hVal1StrFormatted = if (hUnit == "cm") String.format(Locale.US, "%.1f", hVal1) else String.format(Locale.US, "%.0f", hVal1)
-        val hVal2StrFormatted = hVal2.toString()
+        btnGotIt.setOnClickListener { dialog.dismiss() }
 
-        val heightStrForMsg = if (hUnit == "ft+in") getString(R.string.bmi_height_ft_in_format, hVal1StrFormatted, hVal2StrFormatted) else getString(R.string.bmi_height_cm_format, hVal1StrFormatted)
-        binding.tvMessage.text = getString(R.string.bmi_input_data, "$weightStrFormatted $weightUnit", heightStrForMsg, genderStr, age.toString())
-
-        // 描述文本逻辑
-        val currentWeight = weightVal
-        val shortMessage = getString(R.string.bmi_range_normal_adult_description)
-        val isNormal = currentSection?.categoryName.equals("Normal", ignoreCase = true)
-
-        binding.tvDescription.text = if (isNormal) {
-            buildSpannedString {
-                inSpans(CustomTypefaceSpan(regularTypeface!!), ForegroundColorSpan(colorBlack)) { append(shortMessage) }
-            }
+        if (state.age > 20) {
+            tvTip.text = getString(R.string.bmi_adult_tip)
+            tvTipValue.visibility = View.GONE
         } else {
-            val rangeStart = getString(R.string.bmi_result_suggest_start, heightStrForMsg)
-            val rangeText = getString(R.string.bmi_range_format, minWeight, weightUnit, maxWeight, weightUnit)
-            buildSpannedString {
-                inSpans(CustomTypefaceSpan(regularTypeface!!), ForegroundColorSpan(colorBlack)) { append("$rangeStart ") }
-                inSpans(CustomTypefaceSpan(extraBoldTypeface!!), ForegroundColorSpan(colorBlack)) { append(rangeText) }
-                when {
-                    currentWeight > maxWeight -> {
-                        val loseText = getString(R.string.bmi_weight_lose_format, currentWeight - maxWeight, weightUnit)
-                        inSpans(CustomTypefaceSpan(extraBoldTypeface!!), ForegroundColorSpan(colorRed)) { append(loseText) }
-                    }
-                    currentWeight < minWeight -> {
-                        val gainText = getString(R.string.bmi_weight_gain_format, minWeight - currentWeight, weightUnit)
-                        inSpans(CustomTypefaceSpan(extraBoldTypeface!!), ForegroundColorSpan(colorRed)) { append(gainText) }
-                    }
-                }
-            }
+            tvTip.text = getString(R.string.bmi_teenager_tip)
+            tvTipValue.visibility = View.VISIBLE
         }
-        rangeAdapter.setData(sections, bmi)
+        dialog.show()
     }
 
     private fun saveBmiRecord() {
-        val args = arguments ?: return
-        val weightUnit = args.getString("EXTRA_WEIGHT_UNIT") ?: "kg"
-        val heightUnit = args.getString("EXTRA_HEIGHT_UNIT") ?: "cm"
-        
+        val state = viewModel.uiState.value ?: return
         val record = BmiRecord(
-            weight = args.getFloat("EXTRA_WEIGHT_VAL"),
-            weightUnit = weightUnit,
-            heightCm = if (heightUnit == "cm") args.getFloat("EXTRA_HEIGHT_VAL1") else null,
-            heightFt = if (heightUnit == "ft+in") args.getFloat("EXTRA_HEIGHT_VAL1").toInt() else null,
-            heightIn = if (heightUnit == "ft+in") args.getInt("EXTRA_HEIGHT_VAL2") else null,
-            heightUnit = heightUnit,
-            date = args.getString("EXTRA_DATE") ?: "",
-            timeOfDay = args.getString("EXTRA_TIME") ?: "",
-            age = args.getInt("EXTRA_AGE"),
-            gender = if (args.getInt("EXTRA_GENDER") == 0) "Male" else "Female"
+            weight = state.weightVal,
+            weightUnit = state.weightUnit,
+            heightCm = if (state.hUnit == "cm") state.hVal1 else null,
+            heightFt = if (state.hUnit == "ft+in") state.hVal1.toInt() else null,
+            heightIn = if (state.hUnit == "ft+in") state.hVal2 else null,
+            heightUnit = state.hUnit,
+            date = state.date,
+            timeOfDay = state.time,
+            age = state.age,
+            gender = if (state.gender == 0) "Male" else "Female"
         )
 
-        lifecycleScope.launch {
-            AppDatabase.getDatabase(requireContext()).bmiDao().insertRecord(record)
+        viewModel.saveRecord(record) {
             requireActivity().getSharedPreferences("bmi_prefs", Context.MODE_PRIVATE).edit().putBoolean("is_first_time", false).apply()
-            
             startActivity(Intent(requireContext(), MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra("SELECT_TAB", 1) // 保存后跳转到第 2 个 Tab (BMI)
+                putExtra("SELECT_TAB", 1)
             })
             requireActivity().finish()
         }
@@ -371,16 +369,19 @@ class BmiResultFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialogBinding.cancelButton.setOnClickListener { dialog.dismiss() }
         dialogBinding.deleteButton.setOnClickListener {
-            val recordId = arguments?.getLong("EXTRA_RECORD_ID", -1L) ?: -1L
-            if (recordId != -1L) {
-                lifecycleScope.launch {
-                    AppDatabase.getDatabase(requireContext()).bmiDao().deleteById(recordId)
-                    dialog.dismiss()
+            val state = viewModel.uiState.value
+            viewModel.deleteRecord(state?.recordId ?: -1L) { hasRemaining ->
+                dialog.dismiss()
+                if (hasRemaining) {
+                    // 还有记录，正常回到上一级页面（如历史记录列表）
+                    requireActivity().finish()
+                } else {
+                    // 最后一条记录被删除，进入初始输入页面 (DataInputActivity，填满屏幕)
+                    startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    })
                     requireActivity().finish()
                 }
-            } else {
-                dialog.dismiss()
-                requireActivity().finish()
             }
         }
         dialog.show()
@@ -396,12 +397,9 @@ class BmiResultFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        
         val args = arguments
-        if (args != null && args.containsKey("EXTRA_BMI")) {
-            showPassedData(args, true)
-        } else {
-            loadLatestFromDatabase(false)
+        if (args == null || !args.containsKey("EXTRA_BMI")) {
+            viewModel.loadData(args)
         }
     }
 
