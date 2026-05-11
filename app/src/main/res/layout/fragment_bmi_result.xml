@@ -14,8 +14,9 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/ActionBar1"
+            android:visibility="gone"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
             <TextView
                 android:id="@+id/tvDiscard"
                 android:layout_width="wrap_content"
@@ -39,7 +40,7 @@
             android:id="@+id/ActionBar2"
             android:layout_width="match_parent"
             android:visibility="gone"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
             <TextView
                 android:id="@+id/tvBMI"
                 android:layout_width="wrap_content"
@@ -84,9 +85,9 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/ActionBar3"
-            android:visibility="gone"
+            android:visibility="visible"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
             <ImageView
                 android:id="@+id/iv_ActionBar3_Arrow_left"
                 android:layout_width="wrap_content"

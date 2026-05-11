@@ -16,6 +16,7 @@ import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,6 +30,7 @@ import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDeleteCo
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MainActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.BmiRangeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.RecommendAppAdapter
+import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
 import bmicalculator.bmi.calculator.weightlosstracker.util.CustomTypefaceSpan
 import kotlinx.coroutines.flow.first
@@ -92,21 +94,21 @@ class BmiResultFragment : Fragment() {
                 "Home Workout - No Equipments",
                 "Weight Loss, Lose Belly Fat",
                 R.drawable.icon_recommend_s5,
-                "4.9",
+                "4.8",
                 "homeworkout.homeworkouts.noequipment"
             ),
             RecommendAppAdapter.RecommendAppModel(
                 "Home Workout - No Equipments",
                 "Weight Loss, Lose Belly Fat",
                 R.drawable.icon_recommend_s5,
-                "4.9",
+                "4.8",
                 "homeworkout.homeworkouts.noequipment"
             ),
             RecommendAppAdapter.RecommendAppModel(
                 "Home Workout - No Equipments",
                 "Weight Loss, Lose Belly Fat",
                 R.drawable.icon_recommend_s5,
-                "4.9",
+                "4.8",
                 "homeworkout.homeworkouts.noequipment"
             )
         )
@@ -119,6 +121,15 @@ class BmiResultFragment : Fragment() {
     }
 
     private fun setupListeners() {
+        binding.tvStatus.setOnClickListener {
+            ViewModelProvider(requireActivity())[MainViewModel::class.java].selectTab(0)
+        }
+        binding.ivActionBar3ArrowLeft.setOnClickListener {
+            requireActivity().finish()
+        }
+        binding.tvActionBar3Delete.setOnClickListener {
+            showDeleteConfirmDialog()
+        }
         binding.tvDiscard.setOnClickListener {
             showDeleteConfirmDialog()
         }
@@ -134,22 +145,32 @@ class BmiResultFragment : Fragment() {
 
     private fun showPassedData(args: Bundle, animate: Boolean = true) {
         // Standalone 模式 UI 控制
-
         binding.ActionBar1.isVisible = true
         binding.ActionBar2.isVisible = false
         binding.ActionBar3.isVisible = false
-
-
-
 
         binding.tvSave.isVisible = true
         binding.layoutToolbar.isVisible = true
 
         lifecycleScope.launch {
             val hasRecords = AppDatabase.getDatabase(requireContext()).bmiDao().getLatestRecord() != null
+            val historyBmi = args.getBoolean("history_bmi", false)
+            if (historyBmi) {
+                binding.ActionBar1.isVisible = false
+                binding.ActionBar2.isVisible = false
+                binding.ActionBar3.isVisible = true
 
-            if (!hasRecords) {
-                // 第一次计算（数据库无记录）：显示 rvStatus，隐藏推荐
+                binding.rvStatus.isVisible = false
+                binding.DivideLine.isVisible = true
+                binding.tvNeedApp.isVisible = true
+                binding.rvRecommend.isVisible = true
+                binding.tvDateTime.isVisible = true
+                binding.tvSave.isVisible = false
+                
+                binding.tvDateTime.text = "${args.getString("EXTRA_DATE")} ${args.getString("EXTRA_TIME")}"
+            }
+            else if (!hasRecords) {
+
                 Log.d("","数据库无记录")
                 binding.rvStatus.isVisible = true
                 binding.DivideLine.isVisible = false
@@ -157,7 +178,7 @@ class BmiResultFragment : Fragment() {
                 binding.rvRecommend.isVisible = false
                 binding.tvDateTime.isVisible = false
             } else {
-                // 不是第一次计算：隐藏 rvStatus，显示推荐
+
                 Log.d("","数据库无记录")
                 binding.rvStatus.isVisible = false
                 binding.DivideLine.isVisible = true
@@ -350,8 +371,17 @@ class BmiResultFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialogBinding.cancelButton.setOnClickListener { dialog.dismiss() }
         dialogBinding.deleteButton.setOnClickListener {
-            dialog.dismiss()
-            requireActivity().finish()
+            val recordId = arguments?.getLong("EXTRA_RECORD_ID", -1L) ?: -1L
+            if (recordId != -1L) {
+                lifecycleScope.launch {
+                    AppDatabase.getDatabase(requireContext()).bmiDao().deleteById(recordId)
+                    dialog.dismiss()
+                    requireActivity().finish()
+                }
+            } else {
+                dialog.dismiss()
+                requireActivity().finish()
+            }
         }
         dialog.show()
 

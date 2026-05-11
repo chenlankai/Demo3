@@ -7,8 +7,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.viewpager2.widget.ViewPager2
+import androidx.lifecycle.ViewModelProvider
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.MainPagerAdapter
+import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
@@ -30,6 +32,12 @@ class MainActivity : AppCompatActivity() {
 
         val adapter = MainPagerAdapter(this)
         viewPager.adapter = adapter
+        viewPager.isUserInputEnabled = false
+
+        val viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        viewModel.selectedTab.observe(this) { index ->
+            viewPager.setCurrentItem(index, false)
+        }
 
         val selectTab = intent.getIntExtra("SELECT_TAB", 0)
         viewPager.setCurrentItem(selectTab, false)
@@ -51,5 +59,13 @@ class MainActivity : AppCompatActivity() {
 
             }
         }.attach()
+
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                viewPager.setCurrentItem(tab.position, false)
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
+        })
     }
 }

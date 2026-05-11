@@ -17,4 +17,7 @@ interface BmiDao {
 
     @Delete
     suspend fun deleteRecord(record: BmiRecord)
+
+    @Query("DELETE FROM bmi_records WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }
