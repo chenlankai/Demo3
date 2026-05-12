@@ -37,6 +37,12 @@ class StatisticsFragment : Fragment() {
     private var currentMode = "Day"
     private var allRecords: List<BmiRecord> = emptyList()
 
+    // 用于边界稳定
+    private var lastStableMonthXBmi = -1f
+    private var lastStableMonthXWeight = -1f
+    private var lastStableMonthBmi = -1f
+    private var lastStableMonthWeight = -1f
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentStatisticsBinding.inflate(inflater, container, false)
         return binding.root
@@ -46,7 +52,6 @@ class StatisticsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupEdgeToEdge()
 
-        // 1. 初始化图表样式（重点解决坐标跑出范围）
         initChartStyle(binding.bmiChart, "BMI")
         initChartStyle(binding.weightChart, "kg")
 
@@ -68,30 +73,28 @@ class StatisticsFragment : Fragment() {
             isDragEnabled = true
             isAutoScaleMinMaxEnabled = false
 
-
             minOffset = 15f
             setExtraOffsets(11f, 30f, 20.5f, 17.5f)
 
             xAxis.apply {
                 position = XAxis.XAxisPosition.BOTTOM
                 textColor = Color.WHITE
-                textSize = 10f
+                textSize = 12f
                 setDrawGridLines(true)
                 gridColor = Color.parseColor("#33FFFFFF")
                 typeface = ResourcesCompat.getFont(context, R.font.montserrat_extrabold)
                 axisLineColor = Color.TRANSPARENT
-                // 解决 X 轴首尾文字被切掉的问题
                 setAvoidFirstLastClipping(true)
                 yOffset = 8f
             }
 
             axisLeft.apply {
                 textColor = Color.WHITE
-                textSize = 11f
+                textSize = 12f
                 setDrawGridLines(false)
                 typeface = ResourcesCompat.getFont(context, R.font.montserrat_extrabold)
                 axisLineColor = Color.TRANSPARENT
-                xOffset = 12f
+                xOffset = 13f
                 valueFormatter = object : ValueFormatter() {
                     override fun getFormattedValue(value: Float): String = String.format("%.1f", value)
                 }
@@ -117,16 +120,12 @@ class StatisticsFragment : Fragment() {
         val endColor = if (isBmi) "#3659CF" else "#F09235"
         chart.data = LineData(createDataSet(entries, startColor, endColor))
 
-        // --- 核心数学逻辑：解决文字重叠并锁定 75% 绘图区 ---
         if (entries.isNotEmpty()) {
             val minY = entries.minOf { it.y }
             val maxY = entries.maxOf { it.y }
             var delta = maxY - minY
-
-            // 健壮性：防止 delta 极小导致 Y 轴刻度挤爆
             if (delta < 0.5f) delta = 2.0f
 
-            // 75% 绘图区与 0.8:1 留白比计算
             val totalRange = delta / 0.75f
             val marginTotal = totalRange - delta
             val marginBottom = marginTotal * (0.8f / 1.8f)
@@ -135,30 +134,27 @@ class StatisticsFragment : Fragment() {
             chart.axisLeft.apply {
                 axisMinimum = minY - marginBottom
                 axisMaximum = maxY + marginTop
-                setLabelCount(6, true) // 强制 6 个刻度，保证布局极其稳定
+                setLabelCount(6, true)
             }
         }
 
         chart.xAxis.apply {
             valueFormatter = IndexAxisValueFormatter(labels)
-            // 给 X 轴左右留出 0.5 的间隙，防止端点贴墙
-            axisMinimum = -0.5f
-            axisMaximum = maxX + 0.5f
+            axisMinimum = 0f
+            axisMaximum = maxX
             setLabelCount(if (currentMode == "Day") 7 else 6, false)
         }
 
         chart.setVisibleXRangeMaximum(if (currentMode == "Day") 7f else 6f)
         chart.moveViewToX(maxX)
 
-        // 月份同步处理 (不改 XML 显隐，通过 translation 移动)
-        val monthTv = if (isBmi) binding.tvBmiMonth else binding.tvWeightMonth
+        val monthView = if (isBmi) binding.tvBmiMonth else binding.tvWeightMonth
         if (currentMode == "Day") {
-            monthTv.text = SimpleDateFormat("MMMM", Locale.getDefault()).format(parseDate(allRecords.last().date) ?: Date())
-            // 初始同步
-            chart.post { syncMonthPosition(chart, monthTv) }
-            attachGestureListener(chart, monthTv)
+            monthView.text = SimpleDateFormat("MMMM", Locale.getDefault()).format(parseDate(allRecords.last().date) ?: Date())
+            chart.post { syncMonthPosition(chart, monthView, isBmi) }
+            attachGestureListener(chart, monthView, isBmi)
         } else {
-            monthTv.visibility = View.INVISIBLE
+            monthView.visibility = View.INVISIBLE
             chart.onChartGestureListener = null
         }
 
@@ -166,36 +162,60 @@ class StatisticsFragment : Fragment() {
         chart.invalidate()
     }
 
-    private fun syncMonthPosition(chart: LineChart, monthView: TextView) {
-        if (monthView.width == 0) return
+    private fun syncMonthPosition(chart: LineChart, monthView: TextView, isBmi: Boolean) {
+        if (monthView.width == 0) {
+            monthView.post { syncMonthPosition(chart, monthView, isBmi) }
+            return
+        }
 
-        // 计算 X = 1 (即1号) 在屏幕上的物理像素位置
-        val pts = floatArrayOf(1f, 0f)
-        chart.getTransformer(com.github.mikephil.charting.components.YAxis.AxisDependency.LEFT).pointValuesToPixel(pts)
+        val targetX = 1f
+        val lowest = chart.lowestVisibleX
+        val highest = chart.highestVisibleX
+        val maxX = (chart.data?.xMax ?: 0f)
+
+        // 边界检测（允许微小误差）
+        val isAtLeftBound = lowest <= 0.01f
+        val isAtRightBound = highest >= maxX - 0.01f
+
+        if (targetX < lowest || targetX > highest) {
+            monthView.visibility = View.INVISIBLE
+            if (isBmi) lastStableMonthXBmi = -1f else lastStableMonthXWeight = -1f
+            return
+        }
+
+        val pts = floatArrayOf(targetX, 0f)
+        chart.getTransformer(com.github.mikephil.charting.components.YAxis.AxisDependency.LEFT)
+            .pointValuesToPixel(pts)
 
         val contentL = chart.viewPortHandler.contentLeft()
-        val contentR = chart.viewPortHandler.contentRight()
+        var finalX = if (pts[0] < contentL) contentL else pts[0]
 
-        // 仅在 1 号可见时显示，使用 translationX 移动不影响布局稳定性
-        if (pts[0] in contentL..contentR) {
-            monthView.visibility = View.VISIBLE
-            // pts[0] 是绝对屏幕位置，需要减去 TextView 中心偏移
-            monthView.translationX = pts[0] - (monthView.width / 2f)
+        // 边界稳定逻辑
+        val lastStable = if (isBmi) lastStableMonthXBmi else lastStableMonthXWeight
+        if ((isAtLeftBound || isAtRightBound) && lastStable > 0) {
+            if (kotlin.math.abs(finalX - lastStable) < 2f) {
+                finalX = lastStable
+            } else {
+                if (isBmi) lastStableMonthXBmi = finalX else lastStableMonthXWeight = finalX
+            }
         } else {
-            monthView.visibility = View.INVISIBLE
+            if (isBmi) lastStableMonthXBmi = finalX else lastStableMonthXWeight = finalX
         }
+
+        monthView.visibility = View.VISIBLE
+        monthView.translationX = finalX - (monthView.width / 2f)
     }
 
-    private fun attachGestureListener(chart: LineChart, monthView: TextView) {
+    private fun attachGestureListener(chart: LineChart, monthView: TextView, isBmi: Boolean) {
         chart.onChartGestureListener = object : OnChartGestureListener {
-            override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) = syncMonthPosition(chart, monthView)
-            override fun onChartScale(me: MotionEvent?, sX: Float, sY: Float) = syncMonthPosition(chart, monthView)
+            override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) = syncMonthPosition(chart, monthView, isBmi)
+            override fun onChartScale(me: MotionEvent?, sX: Float, sY: Float) = syncMonthPosition(chart, monthView, isBmi)
             override fun onChartGestureStart(me: MotionEvent?, lastGesture: ChartTouchListener.ChartGesture?) {}
             override fun onChartGestureEnd(me: MotionEvent?, lastGesture: ChartTouchListener.ChartGesture?) {}
             override fun onChartLongPressed(me: MotionEvent?) {}
             override fun onChartDoubleTapped(me: MotionEvent?) {}
             override fun onChartSingleTapped(me: MotionEvent?) {}
-            override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, vX: Float, vY: Float) = syncMonthPosition(chart, monthView)
+            override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, vX: Float, vY: Float) = syncMonthPosition(chart, monthView, isBmi)
         }
     }
 
