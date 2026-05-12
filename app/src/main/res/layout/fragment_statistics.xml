@@ -123,23 +123,6 @@
                     android:layout_height="match_parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
-                <TextView
-                    android:id="@+id/tvBmiMonth"
-                    android:layout_width="wrap_content"
-                    android:layout_height="16dp"
-                    android:layout_marginStart="0dp"
-                    android:layout_marginTop="14.5dp"
-                    android:alpha="0.5"
-                    android:fontFamily="@font/montserrat_regular"
-                    android:includeFontPadding="false"
-                    android:text="July"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp"
-                    android:visibility="invisible"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"  />
-
-
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -182,21 +165,7 @@
                     android:layout_height="match_parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
-                <TextView
-                    android:id="@+id/tvWeightMonth"
-                    android:layout_width="wrap_content"
-                    android:layout_height="16dp"
-                    android:layout_marginStart="0dp"
-                    android:layout_marginTop="14.5dp"
-                    android:alpha="0.5"
-                    android:fontFamily="@font/montserrat_regular"
-                    android:includeFontPadding="false"
-                    android:text="July"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp"
-                    android:visibility="invisible"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+
 
 
 
