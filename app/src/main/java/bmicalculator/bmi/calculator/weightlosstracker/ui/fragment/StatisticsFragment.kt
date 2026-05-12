@@ -12,10 +12,12 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.FragmentStatisticsBinding
+import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.StatisticsViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.ui.widget.StatisticsChartMarker
 import com.github.mikephil.charting.charts.LineChart
@@ -82,6 +84,8 @@ class StatisticsFragment : Fragment() {
         StatisticsViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
     }
 
+    private val mainViewModel: MainViewModel by activityViewModels()
+
     private var currentMode = "Day"
     private var allRecords: List<BmiRecord> = emptyList()
 
@@ -99,6 +103,9 @@ class StatisticsFragment : Fragment() {
 
         setupTabSystem()
         binding.tvDay.performClick()
+
+        binding.tvUpdateBmi.setOnClickListener { mainViewModel.selectTab(0) }
+        binding.tvUpdateWeight.setOnClickListener { mainViewModel.selectTab(0) }
 
         viewModel.allRecords.observe(viewLifecycleOwner) { records ->
             if (records.isNullOrEmpty()) return@observe
@@ -346,7 +353,7 @@ class StatisticsFragment : Fragment() {
     private fun createDataSet(entries: List<Entry>, sc: String, ec: String,isBmi : Boolean) = LineDataSet(entries, "").apply {
         // 1. 线条：白色实线
         color = Color.WHITE
-        lineWidth = 2.5f
+        lineWidth = 1f
         mode = LineDataSet.Mode.HORIZONTAL_BEZIER
         setDrawValues(false)
 
@@ -354,8 +361,7 @@ class StatisticsFragment : Fragment() {
         setDrawFilled(true)
 
         // 3. 设置从上到下的渐变
-        // 确保 sc 传入的是不透明或半透明白 (如 #80FFFFFF)
-        // 确保 ec 传入的是完全透明白 (如 #00FFFFFF)
+
         val fillGradient = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(
@@ -365,10 +371,9 @@ class StatisticsFragment : Fragment() {
         )
         fillDrawable = fillGradient
 
-        // 4. 这里的 fillAlpha 设为 255，因为透明度我们已经在 sc/ec 中精确控制了
         fillAlpha = 255
 
-        // 5. 圆点设置
+
         setDrawCircles(true)
         setCircleColor(Color.WHITE)
         circleRadius = 3f

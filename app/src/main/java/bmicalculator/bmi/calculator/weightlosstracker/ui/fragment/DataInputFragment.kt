@@ -267,6 +267,9 @@ class DataInputFragment : Fragment() {
     }
 
     private fun setupListeners() {
+        binding.ivTitleIcon.setOnClickListener {
+            startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MeActivity::class.java))
+        }
         binding.tvData.setOnClickListener { showDatePickerDialog() }
         binding.tvAfternoon.setOnClickListener { showTimePickerDialog() }
 
