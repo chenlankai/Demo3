@@ -48,14 +48,17 @@ class MainActivity : BaseActivity() {
             when (position) {
                 0 -> {
                     tab.text = "Calculator"
+                    tab.setText(R.string.calculator)
                     tab.setIcon(R.drawable.icon_bbar_calculator)
                 }
                 1 -> {
                     tab.text = "BMI"
+                    tab.setText(R.string.bmi)
                     tab.setIcon(R.drawable.icon_bbar_bmi)
                 }
                 2 -> {
                     tab.text = "Statistics"
+                    tab.setText(R.string.statistics)
                     tab.setIcon(R.drawable.icon_bbar_statistic)
                 }
 

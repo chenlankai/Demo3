@@ -1,5 +1,8 @@
 package bmicalculator.bmi.calculator.weightlosstracker.util
 
+import android.content.Context
+import android.provider.Settings.Global.getString
+import bmicalculator.bmi.calculator.weightlosstracker.R
 import kotlin.math.roundToInt
 
 object BmiConfigManager {
@@ -33,6 +36,7 @@ object BmiConfigManager {
             // 成年人对照表逻辑
             val minGrid = 15.6f
             val maxGrid = 40.3f
+
             val sections = listOf(
                 createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", "Very Severely Underweight"),
                 createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", "Severely Underweight"),
@@ -43,6 +47,16 @@ object BmiConfigManager {
                 createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, "35", "Obese Class II"),
                 createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, "40", "Obese Class III")
             )
+            /*val sections = listOf(
+                createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", context.getString(R.string.bmi_very_severely_underweight)),
+                createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", context.getString(R.string.bmi_severely_underweight)),
+                createSection(minGrid, maxGrid, 17f, 18.5f, COLOR_UNDERWEIGHT_LIGHT, "17", context.getString(R.string.bmi_underweight)),
+                createSection(minGrid, maxGrid, 18.5f, 25f, COLOR_NORMAL, "18.5", "Normal"),
+                createSection(minGrid, maxGrid, 25f, 30f, COLOR_OVERWEIGHT, "25", context.getString(R.string.bmi_overweight)),
+                createSection(minGrid, maxGrid, 30f, 35f, COLOR_OBESE_1, "30", "Obese Class I"),
+                createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, "35",  "Obese Class II"),
+                createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, "40", "Obese Class III")
+            )*/
             sections to (minGrid to maxGrid)
         } else {
             // 非成年人逻辑：根据性别和年龄提取阈值
@@ -51,10 +65,9 @@ object BmiConfigManager {
     }
 
     private fun getChildConfig(gender: Int, age: Int): Pair<List<BmiSection>, Pair<Float, Float>> {
-        // 以下数据基于“数值对照表.csv”提取的核心节点
-        // thresholds 格式: Underweight边界, Normal边界, Overweight边界
+
         val (minGrid, maxGrid, thresholds) = when (gender) {
-            0 -> when (age) { // 男性
+            0 -> when (age) {
 
                 2 -> Triple(14f, 20f, listOf(14.8f, 18.2f, 19.3f))
                 3 -> Triple(13f, 19f, listOf(14.4f, 17.4f, 18.3f))
@@ -77,7 +90,7 @@ object BmiConfigManager {
                 20 -> Triple(17f, 32f, listOf(18.5f, 27.2f, 30.7f))
                 else -> Triple(17f, 32f, listOf(18.5f, 27.2f, 30.7f))
             }
-            else -> when (age) { // 女性
+            else -> when (age) {
                 2 -> Triple(13f, 20f, listOf(14.4f, 17.9f, 19.0f))
                 3 -> Triple(13f, 19f, listOf(14.0f, 17.1f, 18.2f))
                 4 -> Triple(13f, 19f, listOf(13.7f, 16.7f, 17.9f))
@@ -123,11 +136,9 @@ object BmiConfigManager {
         category: String
     ): BmiSection {
         val totalRange = gridMax - gridMin
-        // 确定该段在表盘上的实际起始和结束数值
         val startValue = min ?: gridMin
         val endValue = max ?: gridMax
 
-        // 计算百分比权重：(区间长度 / 总长度) * 100
         val weight = ((endValue - startValue) / totalRange) * 100f
 
         return BmiSection(weight, color, label, min, max, category)

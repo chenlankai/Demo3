@@ -212,7 +212,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:paddingStart="15dp"
-                android:paddingEnd="30dp"
+                android:paddingEnd="15dp"
                 android:visibility="visible"
                 tools:listitem="@layout/item_bmi_range"
                 app:layout_constraintTop_toBottomOf="@+id/tvMessage"
