@@ -36,7 +36,7 @@ class LanguageActivity : AppCompatActivity() {
         "Indonesian" to "in",
         "Persian" to "fa"
     )
-    private var currentLangCode = "en" // 默认语言代码
+    private var currentLangCode = "en"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
