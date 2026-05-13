@@ -14,7 +14,9 @@ import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityHistor
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.HistoryAdapter
 import kotlinx.coroutines.launch
 
-class HistoryActivity : AppCompatActivity() {
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+
+class HistoryActivity : BaseActivity() {
 
     private lateinit var binding: ActivityHistoryBinding
     private val historyAdapter = HistoryAdapter()

@@ -7,10 +7,11 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.core.widget.doOnTextChanged
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityFeedbackBinding
 import kotlin.math.max
 
-class FeedbackActivity : AppCompatActivity() {
+class FeedbackActivity : BaseActivity() {
 
     private lateinit var binding: ActivityFeedbackBinding
 

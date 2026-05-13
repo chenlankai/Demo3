@@ -1,19 +1,21 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
-import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
+import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityLanguageBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.LanguageAdapter
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+import bmicalculator.bmi.calculator.weightlosstracker.util.LocaleUtils
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
-class LanguageActivity : AppCompatActivity() {
+class LanguageActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLanguageBinding
     private val languages = listOf(
@@ -43,6 +45,9 @@ class LanguageActivity : AppCompatActivity() {
         enableEdgeToEdge()
         binding = ActivityLanguageBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        // 从存储中获取当前语言，若无则取系统当前语言
+        currentLangCode = LocaleUtils.getLanguage(this)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.layoutToolbar) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -55,9 +60,26 @@ class LanguageActivity : AppCompatActivity() {
         }
 
         binding.rvLanguage.adapter = LanguageAdapter(languages, currentLangCode) { selectedCode ->
-            currentLangCode = selectedCode
-            // 这里通常会添加切换语言的逻辑，并刷新页面
-            finish() 
+            if (currentLangCode != selectedCode) {
+                LocaleUtils.setLocale(this, selectedCode)
+                
+                lifecycleScope.launch {
+                    val records = AppDatabase.getDatabase(this@LanguageActivity).bmiDao().getAllRecords().first()
+                    
+                    val targetActivity = if (records.isEmpty()) {
+                        DataInputActivity::class.java
+                    } else {
+                        MainActivity::class.java
+                    }
+                    
+                    val intent = Intent(this@LanguageActivity, targetActivity)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
+            } else {
+                finish()
+            }
         }
     }
 }

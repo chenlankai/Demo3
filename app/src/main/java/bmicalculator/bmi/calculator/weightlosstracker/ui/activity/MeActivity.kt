@@ -16,7 +16,9 @@ import bmicalculator.bmi.calculator.weightlosstracker.databinding.ViewGoogleAcco
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
-class MeActivity : AppCompatActivity() {
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+
+class MeActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMeBinding
     private var isLoggedIn = false // 记录登录状态

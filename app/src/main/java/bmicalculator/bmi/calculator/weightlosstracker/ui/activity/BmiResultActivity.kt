@@ -9,7 +9,9 @@ import androidx.core.view.updatePadding
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.ui.fragment.BmiResultFragment
 
-class BmiResultActivity : AppCompatActivity() {
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+
+class BmiResultActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

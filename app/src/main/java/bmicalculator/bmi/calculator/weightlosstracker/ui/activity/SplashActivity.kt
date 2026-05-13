@@ -17,7 +17,9 @@ import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivitySplash
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class SplashActivity : AppCompatActivity() {
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+
+class SplashActivity : BaseActivity() {
 
     private lateinit var binding: ActivitySplashBinding
 

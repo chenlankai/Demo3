@@ -10,7 +10,9 @@ import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.ui.fragment.DataInputFragment
 import bmicalculator.bmi.calculator.weightlosstracker.util.systemBarsTopPadding
 
-class DataInputActivity : AppCompatActivity() {
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+
+class DataInputActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
