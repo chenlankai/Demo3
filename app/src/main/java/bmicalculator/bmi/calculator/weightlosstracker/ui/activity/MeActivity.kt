@@ -46,6 +46,12 @@ class MeActivity : AppCompatActivity() {
                 startActivity(it)
             }
         }
+
+        binding.btnLanguage.setOnClickListener {
+            android.content.Intent(this, LanguageActivity::class.java).also {
+                startActivity(it)
+            }
+        }
     }
 
     private fun showGoogleAccountDialog() {

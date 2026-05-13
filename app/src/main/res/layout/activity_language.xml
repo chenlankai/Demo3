@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
 
     android:background="#EAEAEE">
 
@@ -31,14 +32,13 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:fontFamily="@font/montserrat_extrabold"
-            android:text="@string/feedback"
+            android:text="Language Options"
             android:textColor="#000000"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@id/ivBack"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -49,39 +49,16 @@
         android:background="@drawable/bg_feedback_input"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/layoutToolbar">
-
-        <EditText
-            android:id="@+id/etFeedback"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvLanguage"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:alpha="0.5"
-            android:background="@android:color/transparent"
-            android:gravity="top"
-            android:hint="Feedback or suggestion"
-            android:lineSpacingExtra="4dp"
-            android:padding="15dp"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toTopOf="@+id/btnSave"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/btnSave"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginStart="15dp"
-            android:layout_marginEnd="15dp"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/selector_btn_save"
-            android:fontFamily="@font/montserrat_extrabold"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:text="@string/save"
-            android:textAllCaps="true"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:enabled="false"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            android:layout_height="wrap_content"
+            android:paddingVertical="10dp"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_language" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
