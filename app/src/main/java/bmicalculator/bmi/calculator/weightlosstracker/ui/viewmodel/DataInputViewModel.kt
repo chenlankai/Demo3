@@ -18,11 +18,11 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     private val _selectedAge = MutableLiveData(25)
     val selectedAge: LiveData<Int> get() = _selectedAge
 
-    private val _weightKg = MutableLiveData(63.5029318f) // Default 140 lb
-    val weightKg: LiveData<Float> get() = _weightKg
+    private val _weight = MutableLiveData(63.5029318f) // Default 140 lb
+    val weight: LiveData<Float> get() = _weight
 
-    private val _heightCm = MutableLiveData(170.0f)
-    val heightCm: LiveData<Float> get() = _heightCm
+    private val _height = MutableLiveData(170.0f)
+    val height: LiveData<Float> get() = _height
 
     private val _weightUnit = MutableLiveData("lb")
     val weightUnit: LiveData<String> get() = _weightUnit
@@ -62,13 +62,13 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
         _selectedAge.value = age
     }
 
-    fun setWeightKg(weight: Float) {
-        _weightKg.value = weight
+    fun setWeight(weightValue: Float) {
+        _weight.value = weightValue
         _isWeightInteracted.value = true
     }
 
-    fun setHeightCm(height: Float) {
-        _heightCm.value = height
+    fun setHeight(heightValue: Float) {
+        _height.value = heightValue
         _isHeightInteracted.value = true
     }
 
@@ -99,17 +99,17 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
                 _heightUnit.value = it.heightUnit
                 
                 if (it.weightUnit == "lb") {
-                    _weightKg.value = it.weight * 0.45359237f
+                    _weight.value = it.weight * 0.45359237f
                 } else {
-                    _weightKg.value = it.weight
+                    _weight.value = it.weight
                 }
 
                 if (it.heightUnit == "cm") {
-                    _heightCm.value = it.heightCm ?: 170.0f
+                    _height.value = it.heightCm ?: 170.0f
                 } else {
                     val ft = it.heightFt ?: 5
                     val inch = it.heightIn ?: 7
-                    _heightCm.value = ((ft * 12) + inch) * 2.54f
+                    _height.value = ((ft * 12) + inch) * 2.54f
                 }
                 
                 _isWeightInteracted.value = true

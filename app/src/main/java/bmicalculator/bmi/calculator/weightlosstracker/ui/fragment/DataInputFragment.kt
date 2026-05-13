@@ -1,12 +1,16 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.fragment
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,13 +23,15 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
+import android.view.Gravity
+import android.view.inputmethod.EditorInfo
+import android.widget.Toast
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.FragmentDataInputBinding
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogTimePickerBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.BmiResultActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.AgeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.DataInputViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.util.dpToPx
-import bmicalculator.bmi.calculator.weightlosstracker.util.setupMedicalInput
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -66,12 +72,39 @@ class DataInputFragment : Fragment() {
             insets
         }
 
+        val touchListener = View.OnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                val currentFocus = activity?.currentFocus
+                if (currentFocus is EditText) {
+                    val outRect = android.graphics.Rect()
+                    currentFocus.getGlobalVisibleRect(outRect)
+                    if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                        currentFocus.clearFocus()
+                        imm.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+                    }
+                }
+            }
+            false
+        }
+        binding.root.setOnTouchListener(touchListener)
+        binding.innerLayout.setOnTouchListener(touchListener)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val isKeyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            if (!isKeyboardVisible) {
+                val currentFocus = activity?.currentFocus
+                if (currentFocus is EditText) {
+                    currentFocus.clearFocus()
+                }
+            }
+            insets
+        }
+
         setupAgeRecyclerView()
         setupUnitToggles()
         setupGenderSelection()
         setupListeners()
-        setupInteractionDetection()
-        
         observeViewModel()
         
         viewModel.loadLatestRecord()
@@ -93,19 +126,21 @@ class DataInputFragment : Fragment() {
             }
         }
 
-        viewModel.weightKg.observe(viewLifecycleOwner) { kg ->
-            if (!binding.etWeight.isFocused) {
-                val unit = viewModel.weightUnit.value ?: "lb"
-                if (unit == "lb") {
+        viewModel.weight.observe(viewLifecycleOwner) { kg ->
+            val unit = viewModel.weightUnit.value ?: "lb"
+            if (unit == "lb") {
+                if (!binding.etWeight.isFocused) {
                     val lbValue = kg / 0.45359237f
                     binding.etWeight.setText(String.format(Locale.US, "%.2f", lbValue))
-                } else {
-                    binding.etWeight.setText(String.format(Locale.US, "%.2f", kg))
+                }
+            } else {
+                if (!binding.etWeightKg.isFocused) {
+                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", kg))
                 }
             }
         }
         
-        viewModel.heightCm.observe(viewLifecycleOwner) { cm ->
+        viewModel.height.observe(viewLifecycleOwner) { cm ->
             val unit = viewModel.heightUnit.value ?: "ft+in"
             if (unit == "cm") {
                 if (!binding.etHeightCm.isFocused) {
@@ -116,8 +151,8 @@ class DataInputFragment : Fragment() {
                     val totalInches = cm / 2.54f
                     val feet = (totalInches / 12).toInt().coerceIn(1, 8)
                     val inches = Math.round(totalInches % 12).toInt().coerceIn(0, 11)
-                    binding.etHeightFt.setText(feet.toString())
-                    binding.etHeightIn.setText(inches.toString())
+                    binding.etHeightFt.setText("${feet}'")
+                    binding.etHeightIn.setText("${inches}\"")
                 }
             }
         }
@@ -138,6 +173,17 @@ class DataInputFragment : Fragment() {
             }
             updateWeightInputConfig(unit)
             updateToggleUI(binding.toggleWeight, checkId)
+            val currentKg = viewModel.weight.value ?: 0f
+            if (unit == "lb") {
+                val lbValue = currentKg / 0.45359237f
+                if (currentKg > 0) {
+                    binding.etWeight.setText(String.format(Locale.US, "%.2f", lbValue))
+                }
+            } else {
+                if (currentKg > 0) {
+                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", currentKg))
+                }
+            }
         }
         
         viewModel.heightUnit.observe(viewLifecycleOwner) { unit ->
@@ -147,14 +193,33 @@ class DataInputFragment : Fragment() {
             }
             updateHeightVisibility(unit)
             updateToggleUI(binding.toggleHeight, checkId)
+
+            val currentCm = viewModel.height.value ?: 0f
+            if (unit == "cm") {
+                binding.etHeightCm.setText(String.format(Locale.US, "%.1f", currentCm))
+            } else {
+                val totalInches = currentCm / 2.54f
+                val feet = (totalInches / 12).toInt().coerceIn(1, 8)
+                val inches = Math.round(totalInches % 12).toInt().coerceIn(0, 11)
+                binding.etHeightFt.setText("${feet}'")
+                binding.etHeightIn.setText("${inches}\"")
+            }
         }
     }
 
     private fun updateWeightInputConfig(unit: String) {
         if (unit == "lb") {
-            binding.etWeight.setupMedicalInput("lb", 2f, 551f, 2, false, 6)
+            binding.etWeight.visibility = View.VISIBLE
+            binding.etWeightKg.visibility = View.GONE
+            binding.etWeight.setupValidation("lb", 2f, 551f, 2, false, 6) {
+                viewModel.setWeight(it * 0.45359237f)
+            }
         } else {
-            binding.etWeight.setupMedicalInput("kg", 1f, 250f, 2, false, 6)
+            binding.etWeight.visibility = View.GONE
+            binding.etWeightKg.visibility = View.VISIBLE
+            binding.etWeightKg.setupValidation("kg", 1f, 250f, 2, false, 6) {
+                viewModel.setWeight(it)
+            }
         }
     }
 
@@ -162,12 +227,18 @@ class DataInputFragment : Fragment() {
         if (unit == "cm") {
             binding.groupCm.visibility = View.VISIBLE
             binding.groupFtIn.visibility = View.GONE
-            binding.etHeightCm.setupMedicalInput("cm", 1f, 250f, 1, false, 5)
+            binding.etHeightCm.setupValidation("cm", 1f, 250f, 1, false, 5) {
+                viewModel.setHeight(it)
+            }
         } else {
             binding.groupCm.visibility = View.GONE
             binding.groupFtIn.visibility = View.VISIBLE
-            binding.etHeightFt.setupMedicalInput("'", 1f, 8f, 0, true, 1)
-            binding.etHeightIn.setupMedicalInput("''", 0f, 11f, 0, true, 2)
+            binding.etHeightFt.setupValidation("'", 1f, 8f, 0, true, 1) {
+                updateHeightFromFtIn()
+            }
+            binding.etHeightIn.setupValidation("\"", 0f, 11f, 0, true, 2) {
+                updateHeightFromFtIn()
+            }
         }
     }
 
@@ -208,15 +279,17 @@ class DataInputFragment : Fragment() {
     }
 
     private fun setupUnitToggles() {
-        binding.toggleWeight.addOnButtonCheckedListener { group, checkedId, isChecked ->
+        binding.toggleWeight.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
+                activity?.currentFocus?.clearFocus()
                 val unit = if (checkedId == binding.btnLb.id) "lb" else "kg"
                 viewModel.setWeightUnit(unit)
             }
         }
 
-        binding.toggleHeight.addOnButtonCheckedListener { group, checkedId, isChecked ->
+        binding.toggleHeight.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
+                activity?.currentFocus?.clearFocus()
                 val unit = if (checkedId == binding.btnCM.id) "cm" else "ft+in"
                 viewModel.setHeightUnit(unit)
             }
@@ -248,8 +321,14 @@ class DataInputFragment : Fragment() {
     }
 
     private fun setupGenderSelection() {
-        binding.layoutMale.setOnClickListener { viewModel.setGender(true) }
-        binding.layoutFemale.setOnClickListener { viewModel.setGender(false) }
+        binding.layoutMale.setOnClickListener {
+            activity?.currentFocus?.clearFocus()
+            viewModel.setGender(true)
+        }
+        binding.layoutFemale.setOnClickListener {
+            activity?.currentFocus?.clearFocus()
+            viewModel.setGender(false)
+        }
     }
 
     private fun updateGenderUI(isMale: Boolean) {
@@ -274,10 +353,31 @@ class DataInputFragment : Fragment() {
         binding.tvAfternoon.setOnClickListener { showTimePickerDialog() }
 
         binding.btnCalculate.setOnClickListener {
+            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            activity?.currentFocus?.let {
+                it.clearFocus()
+                imm.hideSoftInputFromWindow(it.windowToken, 0)
+            }
+
+            val weightKg = viewModel.weight.value ?: 0f
+            val heightCm = viewModel.height.value ?: 0f
+
+            if (weightKg <= 0) {
+                val unit = viewModel.weightUnit.value ?: "lb"
+                if (unit == "lb") showValidationError("lb", 2f, 551f)
+                else showValidationError("kg", 1f, 250f)
+                return@setOnClickListener
+            }
+
+            if (heightCm <= 0) {
+                val unit = viewModel.heightUnit.value ?: "ft+in"
+                if (unit == "cm") showValidationError("cm", 1f, 250f)
+                else showValidationError("ft/in", 1f, 8f)
+                return@setOnClickListener
+            }
+
             val isMale = viewModel.isMale.value ?: true
             val age = viewModel.selectedAge.value ?: 25
-            val weightKg = viewModel.weightKg.value ?: 0f
-            val heightCm = viewModel.heightCm.value ?: 0f
             
             val weightUnit = viewModel.weightUnit.value ?: "lb"
             val weightValue = if (weightUnit == "lb") weightKg / 0.45359237f else weightKg
@@ -296,23 +396,21 @@ class DataInputFragment : Fragment() {
                 hVal2 = 0
             }
 
-            if (weightKg > 0 && heightM > 0) {
-                val bmi = weightKg / (heightM * heightM)
-                val intent = Intent(requireContext(), BmiResultActivity::class.java).apply {
-                    putExtra("EXTRA_BMI", bmi)
-                    putExtra("EXTRA_GENDER", if (isMale) 0 else 1)
-                    putExtra("EXTRA_AGE", age)
-                    putExtra("EXTRA_HEIGHT_M", heightM)
-                    putExtra("EXTRA_DATE", viewModel.selectedDate.value)
-                    putExtra("EXTRA_TIME", viewModel.selectedTime.value)
-                    putExtra("EXTRA_WEIGHT_VAL", weightValue)
-                    putExtra("EXTRA_WEIGHT_UNIT", weightUnit)
-                    putExtra("EXTRA_HEIGHT_VAL1", hVal1)
-                    putExtra("EXTRA_HEIGHT_VAL2", hVal2)
-                    putExtra("EXTRA_HEIGHT_UNIT", heightUnit)
-                }
-                startActivity(intent)
+            val bmi = weightKg / (heightM * heightM)
+            val intent = Intent(requireContext(), BmiResultActivity::class.java).apply {
+                putExtra("EXTRA_BMI", bmi)
+                putExtra("EXTRA_GENDER", if (isMale) 0 else 1)
+                putExtra("EXTRA_AGE", age)
+                putExtra("EXTRA_HEIGHT_M", heightM)
+                putExtra("EXTRA_DATE", viewModel.selectedDate.value)
+                putExtra("EXTRA_TIME", viewModel.selectedTime.value)
+                putExtra("EXTRA_WEIGHT_VAL", weightValue)
+                putExtra("EXTRA_WEIGHT_UNIT", weightUnit)
+                putExtra("EXTRA_HEIGHT_VAL1", hVal1)
+                putExtra("EXTRA_HEIGHT_VAL2", hVal2)
+                putExtra("EXTRA_HEIGHT_UNIT", heightUnit)
             }
+            startActivity(intent)
         }
     }
 
@@ -404,40 +502,190 @@ class DataInputFragment : Fragment() {
         dialog.show()
     }
 
-    private fun setupInteractionDetection() {
-        binding.etWeight.doOnTextChanged { text, _, _, _ ->
-            if (binding.etWeight.isFocused) {
-                val value = text.toString().filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f
-                val unit = viewModel.weightUnit.value ?: "lb"
-                if (unit == "lb") {
-                    viewModel.setWeightKg(value * 0.45359237f)
+
+    private fun EditText.setupValidation(
+        unit: String,
+        min: Float,
+        max: Float,
+        decimalDigits: Int,
+        showUnitDuringEdit: Boolean,
+        maxLen: Int,
+        onValid: (Float) -> Unit
+    ) {
+        this.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                if (showUnitDuringEdit) {
+                    val currentText = text.toString()
+                    if (!currentText.endsWith(unit)) {
+                        val numeric = currentText.filter { it.isDigit() || it == '.' }
+                        setText("$numeric$unit")
+                        setSelection(numeric.length)
+                    } else {
+                        setSelection(currentText.length - unit.length)
+                    }
                 } else {
-                    viewModel.setWeightKg(value)
+                    val rawInput = text.toString().filter { it.isDigit() || it == '.' }
+                    setText(rawInput)
+                    if (rawInput.isNotEmpty()) {
+                        setSelection(rawInput.length)
+                    }
+                }
+            } else {
+                performValidation(unit, min, max, onValid)
+            }
+        }
+
+        if (showUnitDuringEdit) {
+            this.setOnTouchListener { v, event ->
+                val et = v as EditText
+                val s = et.text.toString()
+                if (s.endsWith(unit)) {
+                    val numericLength = s.length - unit.length
+                    val offset = et.getOffsetForPosition(event.x, event.y)
+                    if (offset >= numericLength) {
+                        if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
+                            if (!et.isFocused) {
+                                et.requestFocus()
+                                val imm = et.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                                imm.showSoftInput(et, InputMethodManager.SHOW_IMPLICIT)
+                            }
+                            et.setSelection(numericLength)
+                        } else if (event.action == MotionEvent.ACTION_UP) {
+                            et.performClick()
+                        }
+                        return@setOnTouchListener true
+                    }
+                }
+                false
+            }
+
+            this.doOnTextChanged { text, _, _, _ ->
+                if (isFocused) {
+                    val s = text.toString()
+                    if (!s.endsWith(unit)) {
+                        val numeric = s.filter { it.isDigit() || it == '.' }
+                        val newText = "$numeric$unit"
+                        setText(newText)
+                        setSelection(numeric.length)
+                    } else {
+                        val numericLength = s.length - unit.length
+                        val start = selectionStart.coerceAtMost(numericLength)
+                        val end = selectionEnd.coerceAtMost(numericLength)
+                        if (selectionStart != start || selectionEnd != end) {
+                            android.text.Selection.setSelection(getText(), start, end)
+                        }
+                    }
+                }
+            }
+
+            this.accessibilityDelegate = object : View.AccessibilityDelegate() {
+                private var isChanging = false
+                override fun sendAccessibilityEvent(host: View, eventType: Int) {
+                    if (eventType == android.view.accessibility.AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) {
+                        val et = host as? EditText
+                        val s = et?.text?.toString() ?: ""
+                        if (s.endsWith(unit)) {
+                            val numericLength = s.length - unit.length
+                            if (et != null && (et.selectionStart > numericLength || et.selectionEnd > numericLength)) {
+                                if (!isChanging) {
+                                    isChanging = true
+                                    et.setSelection(
+                                        et.selectionStart.coerceAtMost(numericLength),
+                                        et.selectionEnd.coerceAtMost(numericLength)
+                                    )
+                                    isChanging = false
+                                }
+                            }
+                        }
+                    }
+                    super.sendAccessibilityEvent(host, eventType)
                 }
             }
         }
-        binding.etHeightCm.doOnTextChanged { text, _, _, _ ->
-            if (binding.etHeightCm.isFocused) {
-                val cm = text.toString().filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f
-                viewModel.setHeightCm(cm)
+
+        this.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                performValidation(unit, min, max, onValid)
+                this.clearFocus()
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(this.windowToken, 0)
+                true
+            } else {
+                false
             }
         }
-        binding.etHeightFt.doOnTextChanged { _, _, _, _ ->
-            if (binding.etHeightFt.isFocused) {
-                updateHeightFromFtIn()
+    }
+
+    private fun EditText.performValidation(
+        unit: String,
+        min: Float,
+        max: Float,
+        onValid: (Float) -> Unit
+    ) {
+        val rawInput = text.toString().filter { it.isDigit() || it == '.' }
+        val input = rawInput.toFloatOrNull()
+        
+        var resultValue: Float
+        var shouldShowError: Boolean
+
+        if (input == null) {
+            if (this.id == binding.etHeightIn.id) {
+                resultValue = 0f
+                shouldShowError = false
+            } else {
+                resultValue = when (this.id) {
+                    binding.etWeight.id -> 140f
+                    binding.etWeightKg.id -> 60f
+                    binding.etHeightCm.id -> 170f
+                    binding.etHeightFt.id -> 5f
+                    else -> min
+                }
+                shouldShowError = true
             }
+        } else if (input < min) {
+            resultValue = min
+            shouldShowError = true
+        } else if (input > max) {
+            resultValue = max
+            shouldShowError = true
+        } else {
+            resultValue = input
+            shouldShowError = false
         }
-        binding.etHeightIn.doOnTextChanged { _, _, _, _ ->
-            if (binding.etHeightIn.isFocused) {
-                updateHeightFromFtIn()
-            }
+
+        if (shouldShowError) {
+            showValidationError(unit, min, max)
+        }
+
+        val formattedValue = when (this.id) {
+            binding.etWeight.id, binding.etWeightKg.id -> String.format(Locale.US, "%.2f", resultValue)
+            binding.etHeightCm.id -> String.format(Locale.US, "%.1f", resultValue)
+            else -> "${resultValue.toInt()}$unit"
+        }
+        setText(formattedValue)
+        onValid(resultValue)
+    }
+
+    private fun showValidationError(unit: String, min: Float, max: Float) {
+        val minStr = if (min == min.toInt().toFloat()) min.toInt().toString() else String.format(Locale.US, "%.1f", min)
+        val maxStr = if (max == max.toInt().toFloat()) max.toInt().toString() else String.format(Locale.US, "%.1f", max)
+
+        val message = if (unit == "kg" || unit == "lb") {
+            "Please input a valid weight ($minStr - $maxStr $unit) to calculate your BMI accurately"
+        } else {
+            val displayUnit = if (unit == "'" || unit == "\"" || unit == "ft/in") "ft/in" else unit
+            "Please input a valid Height ($minStr - $maxStr $displayUnit) to calculate your BMI accurately"
+        }
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).apply {
+            setGravity(Gravity.TOP, 0, 100)
+            show()
         }
     }
 
     private fun updateHeightFromFtIn() {
         val feet = binding.etHeightFt.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
         val inches = binding.etHeightIn.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
-        viewModel.setHeightCm(((feet * 12) + inches) * 2.54f)
+        viewModel.setHeight(((feet * 12) + inches) * 2.54f)
     }
 
     private fun updateItemsAlpha() {
@@ -457,4 +705,5 @@ class DataInputFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
 }

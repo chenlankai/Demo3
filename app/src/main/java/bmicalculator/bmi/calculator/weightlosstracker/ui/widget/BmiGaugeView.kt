@@ -77,14 +77,19 @@ class BmiGaugeView @JvmOverloads constructor(
     }
 
     fun setBmi(value: Float, animate: Boolean = true) {
-        val targetBmi = value.coerceIn(minBmi, maxBmi)
+        // 1. 指针旋转的目标：必须限制在 minBmi 和 maxBmi 之间
+        val clampedBmiForPointer = value.coerceIn(minBmi, maxBmi)
+
+        // 2. 显示的数值：不限制范围，使用原始传入的值
+        val targetBmiValueForDisplay = value
 
         if (!animate) {
             pointerAnimator?.cancel()
-            currentBmi = targetBmi
-            val ratio = (targetBmi - minBmi) / (maxBmi - minBmi)
+            currentBmi = targetBmiValueForDisplay
+            // 基于 clamped 值计算角度
+            val ratio = (clampedBmiForPointer - minBmi) / (maxBmi - minBmi)
             animatedAngle = 180f + (ratio * 180f)
-            onBmiChangeListener?.invoke(targetBmi)
+            onBmiChangeListener?.invoke(currentBmi)
             invalidate()
             return
         }
@@ -94,7 +99,8 @@ class BmiGaugeView @JvmOverloads constructor(
         resetState()
 
         // 2. 准备增长动画的目标参数
-        val ratio = (targetBmi - minBmi) / (maxBmi - minBmi)
+        // 这里使用 clamped 值来计算指针的最终目标角度
+        val ratio = (clampedBmiForPointer - minBmi) / (maxBmi - minBmi)
         val targetAngle = 180f + (ratio * 180f)
 
         // 3. 直接启动从 0 开始的增长动画
@@ -106,7 +112,8 @@ class BmiGaugeView @JvmOverloads constructor(
 
                 // 动画始终基于固定的起点 (180f / 0f) 进行计算
                 animatedAngle = 180f + (targetAngle - 180f) * fraction
-                val frameBmi = 0f + (targetBmi - 0f) * fraction
+                // 数值动画：基于原始的 targetBmiValueForDisplay 进行计算
+                val frameBmi = 0f + (targetBmiValueForDisplay - 0f) * fraction
                 currentBmi = frameBmi
 
                 onBmiChangeListener?.invoke(frameBmi)
@@ -114,7 +121,7 @@ class BmiGaugeView @JvmOverloads constructor(
             }
             start()
         }
-        
+
         // 立即触发重绘，确保哪怕动画第一帧未到，画面也已处于 0 位
         invalidate()
     }

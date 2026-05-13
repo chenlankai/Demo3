@@ -49,8 +49,11 @@
         android:scrollbars="none">
 
         <LinearLayout
+            android:id="@+id/innerLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:orientation="vertical">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -95,6 +98,24 @@
 
                 <EditText
                     android:id="@+id/etWeight"
+                    android:layout_width="0dp"
+                    android:layout_height="68dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginEnd="7.5dp"
+                    android:layout_marginTop="15dp"
+                    android:textColor="#000000"
+                    android:background="@drawable/bg_rounded_white"
+                    android:gravity="center"
+                    android:hint="@string/default_weight_hint"
+                    android:textSize="30sp"
+                    android:inputType="numberDecimal"
+                    android:maxLength="6"
+                    android:fontFamily="@font/montserrat_extrabold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/guideline_mid"
+                    app:layout_constraintTop_toBottomOf="@+id/tvTitleWeight" />
+                <EditText
+                    android:id="@+id/etWeightKg"
                     android:layout_width="0dp"
                     android:layout_height="68dp"
                     android:layout_marginStart="20dp"
