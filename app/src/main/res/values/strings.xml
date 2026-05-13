@@ -62,6 +62,7 @@
 	<string name="last_sync">Last sync: %s</string>
 	<string name="login_out_sure">Are you sure you want to log out?</string>
 	<string name="log_out">Log out</string>
+	<string name="log_in">Log in</string>
 	<string name="log_weight_time">Time</string>
 	<string name="male">Male</string>
 	<string name="mine">Me</string>

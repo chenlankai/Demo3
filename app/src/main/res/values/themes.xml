@@ -23,5 +23,8 @@
     <style name="TransparentBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
         <item name="android:background">@android:color/transparent</item>
     </style>
+    <style name="CircleImageStyle">
+        <item name="cornerSize">50%</item>
+    </style>
 
 </resources>

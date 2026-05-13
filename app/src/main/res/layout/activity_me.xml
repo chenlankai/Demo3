@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:background="#EAEAEE">
 
+
         <ImageView
             android:id="@+id/ivBack"
             android:layout_width="wrap_content"
@@ -59,9 +60,23 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingStart="15dp"
-                android:paddingEnd="15dp"
-                >
+                android:paddingStart="0dp"
+                android:paddingEnd="15dp">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivAvatar"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginStart="15dp"
+                    android:scaleType="centerCrop"
+                    android:visibility= "gone"
+                    android:src="@drawable/source_image"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:shapeAppearanceOverlay="@style/CircleImageStyle"
+                    />
+
 
                 <TextView
                     android:id="@+id/tvBackupTitle"
@@ -72,7 +87,8 @@
                     android:textColor="#000000"
                     android:textSize="16sp"
                     android:layout_marginTop="20.5dp"
-                    app:layout_constraintStart_toStartOf="parent"
+                    android:layout_marginStart="15dp"
+                    app:layout_constraintStart_toEndOf="@id/ivAvatar"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
@@ -94,7 +110,7 @@
                     android:text="Synchronize your data"
                     android:textColor="#444444"
                     android:textSize="14sp"
-                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintStart_toStartOf="@id/tvBackupTitle"
                     app:layout_constraintTop_toBottomOf="@id/tvBackupTitle"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
@@ -197,8 +213,17 @@
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchFit"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+
+                        android:thumb="@drawable/selector_switch_thumb"
+                        app:track="@drawable/selector_switch_track"
+
+                        app:thumbTint="@null"
+                        app:trackTint="@null"
+                        android:splitTrack="false"
+                        app:switchMinWidth="34dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
@@ -318,7 +343,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="15dp"
                         android:fontFamily="@font/montserrat_regular"
-                        android:text="@string/facebook"
+                        android:text="@string/feedback"
                         android:textColor="#000000"
                         android:textSize="16sp"
                         app:layout_constraintBottom_toBottomOf="parent"

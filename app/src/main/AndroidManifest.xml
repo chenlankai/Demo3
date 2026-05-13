@@ -33,6 +33,10 @@
             android:name=".ui.activity.MeActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.activity.FeedbackActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity
             android:name=".ui.activity.HistoryActivity"
             android:exported="false"
             android:theme="@style/Theme.BMICalculatorWeightLossTracker" />
