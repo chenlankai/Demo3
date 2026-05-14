@@ -151,7 +151,6 @@
                     app:layout_constraintStart_toEndOf="@id/guideline_mid"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:layout_marginEnd="20dp" />
-
                 <EditText
                     android:id="@+id/etHeightFt"
                     android:layout_width="0dp"
@@ -164,6 +163,7 @@
                     android:hint="@string/default_height_ft_hint"
                     android:textSize="30sp"
                     android:inputType="number"
+                    android:maxLength="2"
                     android:fontFamily="@font/montserrat_extrabold"
                     app:layout_constraintHorizontal_weight="0.875"
                     app:layout_constraintStart_toEndOf="@+id/guideline_mid"
@@ -191,6 +191,7 @@
                     android:fontFamily="@font/montserrat_extrabold"
                     android:gravity="center"
                     android:hint="@string/default_height_in_hint"
+                    android:maxLength="3"
                     android:inputType="number"
                     android:textSize="30sp"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -352,6 +353,7 @@
                     android:hint="@string/default_date_hint"
                     android:gravity="center"
                     android:textSize="20sp"
+                    android:includeFontPadding="false"
                     android:fontFamily="@font/montserrat_extrabold"
                     app:layout_constraintHorizontal_weight="1"
                     app:layout_constraintStart_toStartOf="parent"

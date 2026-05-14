@@ -25,11 +25,14 @@ import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import android.view.Gravity
 import android.view.inputmethod.EditorInfo
+import android.widget.PopupWindow
+import android.widget.TextView
 import android.widget.Toast
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.FragmentDataInputBinding
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogTimePickerBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.BmiResultActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.AgeAdapter
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.DataInputViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.util.dpToPx
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -667,6 +670,7 @@ class DataInputFragment : Fragment() {
     }
 
     private fun showValidationError(unit: String, min: Float, max: Float) {
+
         val minStr = if (min == min.toInt().toFloat()) min.toInt().toString() else String.format(Locale.US, "%.1f", min)
         val maxStr = if (max == max.toInt().toFloat()) max.toInt().toString() else String.format(Locale.US, "%.1f", max)
 
@@ -676,10 +680,12 @@ class DataInputFragment : Fragment() {
             val displayUnit = if (unit == "'" || unit == "\"" || unit == "ft/in") "ft/in" else unit
             "Please input a valid Height ($minStr - $maxStr $displayUnit) to calculate your BMI accurately"
         }
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).apply {
-            setGravity(Gravity.TOP, 0, 100)
-            show()
-        }
+        (requireActivity() as? BaseActivity)?.showStatusToast(
+            message,
+            R.drawable.ic_report_problem,
+            "#2196F3"
+        )
+
     }
 
     private fun updateHeightFromFtIn() {

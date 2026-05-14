@@ -1,8 +1,14 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
+import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.widget.PopupWindow
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -61,26 +67,38 @@ class MeActivity : BaseActivity() {
         val dialog = BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
         dialog.setContentView(dialogBinding.root)
 
+        // 1. 初始化对话框 UI 状态
         if (isLoggedIn) {
             dialogBinding.btnLog.text = "Log out"
             dialogBinding.btnLog.setTextColor(Color.parseColor("#F4333C"))
-
         } else {
             dialogBinding.btnLog.text = "Log in"
             dialogBinding.btnLog.setTextColor(Color.BLACK)
-
         }
 
         dialogBinding.btnClose.setOnClickListener { dialog.dismiss() }
         dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
 
         dialogBinding.btnLog.setOnClickListener {
-
             isLoggedIn = !isLoggedIn
-
             binding.ivAvatar.isVisible = isLoggedIn
 
-            Toast.makeText(this, if (isLoggedIn) "Logged in successfully" else "Logged out", Toast.LENGTH_SHORT).show()
+            val statusMessage: String
+            val iconRes: Int
+            val colorStr: String
+
+            if (isLoggedIn) {
+                statusMessage = "Logged in successfully"
+                iconRes = R.drawable.login
+                colorStr = "#4CAF50"
+            } else {
+                statusMessage = "Logged out"
+                iconRes = R.drawable.logout
+                colorStr = "#2196F3"
+            }
+
+            showStatusToast(statusMessage, iconRes, colorStr)
+
             dialog.dismiss()
         }
 
