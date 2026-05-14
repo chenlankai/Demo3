@@ -22,6 +22,8 @@ import bmicalculator.bmi.calculator.weightlosstracker.databinding.ViewGoogleAcco
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
+import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogSyncIssueBinding
+import androidx.appcompat.app.AlertDialog
 import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
 
 class MeActivity : BaseActivity() {
@@ -39,6 +41,9 @@ class MeActivity : BaseActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = systemBars.top)
             insets
+        }
+        binding.ivRefresh.setOnClickListener { 
+            showSyncIssueDialog()
         }
 
         binding.ivBack.setOnClickListener {
@@ -60,6 +65,21 @@ class MeActivity : BaseActivity() {
                 startActivity(it)
             }
         }
+        
+    }
+
+    private fun showSyncIssueDialog() {
+        val dialogBinding = DialogSyncIssueBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        dialogBinding.btnDone.setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 
     private fun showGoogleAccountDialog() {

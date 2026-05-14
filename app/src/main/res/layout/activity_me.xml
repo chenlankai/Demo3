@@ -115,9 +115,10 @@
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
                 <ImageView
+                    android:id="@+id/ivRefresh"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/icon_me_refersh"
+                    android:src="@drawable/icon_me_refresh"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
