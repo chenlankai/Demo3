@@ -106,6 +106,21 @@ class DataInputFragment : Fragment() {
 
         setupAgeRecyclerView()
         setupUnitToggles()
+
+        binding.root.post {
+            val initialWeightUnit = viewModel.weightUnit.value ?: "lb"
+            val initialWeightId = if (initialWeightUnit == "lb") binding.btnLb.id else binding.btnKg.id
+            binding.toggleWeight.check(initialWeightId)
+            updateToggleUI(binding.toggleWeight, initialWeightId)
+            updateWeightInputConfig(initialWeightUnit)
+
+            val initialHeightUnit = viewModel.heightUnit.value ?: "ft+in"
+            val initialHeightId = if (initialHeightUnit == "cm") binding.btnCM.id else binding.btnFTin.id
+            binding.toggleHeight.check(initialHeightId)
+            updateToggleUI(binding.toggleHeight, initialHeightId)
+            updateHeightVisibility(initialHeightUnit)
+        }
+
         setupGenderSelection()
         setupListeners()
         observeViewModel()
@@ -244,6 +259,11 @@ class DataInputFragment : Fragment() {
             }
         }
     }
+    private fun updateHeightFromFtIn() {
+        val feet = binding.etHeightFt.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
+        val inches = binding.etHeightIn.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
+        viewModel.setHeight(((feet * 12) + inches) * 2.54f)
+    }
 
     private fun setupAgeRecyclerView() {
         val ages = (1..120).toList()
@@ -280,8 +300,23 @@ class DataInputFragment : Fragment() {
             }
         })
     }
+    private fun updateItemsAlpha() {
+        val layoutManager = binding.rvAge.layoutManager as? LinearLayoutManager ?: return
+        val centerX = (binding.rvAge.width / 2).toFloat()
+        for (i in 0 until layoutManager.childCount) {
+            val child = layoutManager.getChildAt(i) ?: continue
+            val childCenterX = (child.left + child.right) / 2f
+            val distance = abs(childCenterX - centerX)
+            val maxDistance = 100.dpToPx(requireContext()).toFloat()
+            val alpha = (1f - (distance / maxDistance)).coerceIn(0.1f, 1f)
+            child.alpha = alpha
+        }
+    }
 
     private fun setupUnitToggles() {
+
+
+
         binding.toggleWeight.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 activity?.currentFocus?.clearFocus()
@@ -307,10 +342,12 @@ class DataInputFragment : Fragment() {
     }
 
     private fun updateButtonStyle(button: MaterialButton, isSelected: Boolean) {
+        // 强制设置全圆角，覆盖 ToggleGroup 的默认拼接逻辑
         val shapeModel = button.shapeAppearanceModel.toBuilder()
             .setAllCornerSizes(100f)
             .build()
         button.shapeAppearanceModel = shapeModel
+        button.invalidateOutline()
 
         if (isSelected) {
             button.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
@@ -688,24 +725,6 @@ class DataInputFragment : Fragment() {
 
     }
 
-    private fun updateHeightFromFtIn() {
-        val feet = binding.etHeightFt.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
-        val inches = binding.etHeightIn.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
-        viewModel.setHeight(((feet * 12) + inches) * 2.54f)
-    }
-
-    private fun updateItemsAlpha() {
-        val layoutManager = binding.rvAge.layoutManager as? LinearLayoutManager ?: return
-        val centerX = (binding.rvAge.width / 2).toFloat()
-        for (i in 0 until layoutManager.childCount) {
-            val child = layoutManager.getChildAt(i) ?: continue
-            val childCenterX = (child.left + child.right) / 2f
-            val distance = abs(childCenterX - centerX)
-            val maxDistance = 100.dpToPx(requireContext()).toFloat()
-            val alpha = (1f - (distance / maxDistance)).coerceIn(0.1f, 1f)
-            child.alpha = alpha
-        }
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

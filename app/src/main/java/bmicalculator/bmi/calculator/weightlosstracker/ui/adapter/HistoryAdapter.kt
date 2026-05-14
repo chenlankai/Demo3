@@ -3,6 +3,7 @@ package bmicalculator.bmi.calculator.weightlosstracker.ui.adapter
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.provider.Settings.Global.getString
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -93,7 +94,11 @@ class HistoryAdapter : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
             val currentSection = sections.find { bmi >= (it.minRange ?: Float.MIN_VALUE) && bmi < (it.maxRange ?: Float.MAX_VALUE) }
                 ?: sections.lastOrNull()
 
-            binding.tvStatus.text = currentSection?.categoryName ?: ""
+            if (currentSection != null) {
+                binding.tvStatus.setText(currentSection.categoryResId)
+            } else {
+                binding.tvStatus.text = ""
+            }
             currentSection?.let {
                 try {
                     binding.ivOval.setColorFilter(Color.parseColor(it.color))

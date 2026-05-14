@@ -157,4 +157,8 @@
 	<string name="default_height_ft_hint" translatable="false">0\'</string>
 	<string name="default_height_in_hint" translatable="false">0\'\'</string>
 	<string name="default_date_hint" translatable="false">July 30, 2021</string>
+	<string name="bmi_normal">Normal</string>
+	<string name="bmi_obese_class_i">Obese Class I</string>
+	<string name="bmi_obese_class_ii">Obese Class II</string>
+	<string name="bmi_obese_class_iii">Obese Class III</string>
 </resources>

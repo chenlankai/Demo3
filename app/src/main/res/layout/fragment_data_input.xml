@@ -65,21 +65,21 @@
                     android:id="@+id/tvTitleWeight"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="19dp"
                     android:fontFamily="@font/montserrat_regular"
                     android:gravity="center"
                     android:textSize="14sp"
+
                     android:text="@string/weight"
                     app:layout_constraintEnd_toStartOf="@+id/tvTitleHeight"
                     app:layout_constraintHorizontal_weight="1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+<!--                android:layout_marginTop="19dp"-->
 
                 <TextView
                     android:id="@+id/tvTitleHeight"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="19dp"
                     android:fontFamily="@font/montserrat_regular"
                     android:gravity="center"
                     android:text="@string/height"
@@ -87,7 +87,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_weight="1"
                     app:layout_constraintStart_toEndOf="@+id/tvTitleWeight"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="@id/tvTitleWeight" />
 
                 <androidx.constraintlayout.widget.Guideline
                     android:id="@+id/guideline_mid"
@@ -348,6 +348,8 @@
                     android:layout_height="60dp"
                     android:layout_marginTop="15dp"
                     android:layout_marginStart="20dp"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
                     android:textColor="#000000"
                     android:background="@drawable/bg_rounded_white"
                     android:hint="@string/default_date_hint"

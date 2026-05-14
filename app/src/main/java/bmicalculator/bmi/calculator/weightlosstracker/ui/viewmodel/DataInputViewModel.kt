@@ -46,6 +46,7 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     val latestRecord: LiveData<BmiRecord?> get() = _latestRecord
 
     init {
+
         val calendar = Calendar.getInstance()
         val monthStr = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")[calendar.get(Calendar.MONTH)]
         val day = calendar.get(Calendar.DAY_OF_MONTH)
@@ -73,10 +74,24 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     }
 
     fun setWeightUnit(unit: String) {
+        if (_isWeightInteracted.value != true) {
+            if (unit == "lb") {
+                _weight.value = 140f * 0.45359237f
+            } else {
+                _weight.value = 65.0f
+            }
+        }
         _weightUnit.value = unit
     }
 
     fun setHeightUnit(unit: String) {
+        if (_isHeightInteracted.value != true) {
+            if (unit == "cm") {
+                _height.value = 170.0f // 默认 170.0 cm
+            } else {
+                _height.value = 170.18f // 对应 5'7" (67 inches * 2.54)
+            }
+        }
         _heightUnit.value = unit
     }
 

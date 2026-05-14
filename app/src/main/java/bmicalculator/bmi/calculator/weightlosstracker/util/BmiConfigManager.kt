@@ -2,6 +2,7 @@ package bmicalculator.bmi.calculator.weightlosstracker.util
 
 import android.content.Context
 import android.provider.Settings.Global.getString
+import androidx.annotation.StringRes
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import kotlin.math.roundToInt
 
@@ -22,7 +23,8 @@ object BmiConfigManager {
         val tickLabel: String,
         val minRange: Float?,
         val maxRange: Float?,
-        val categoryName: String?
+        //val categoryName: String?
+        @StringRes val categoryResId: Int
     )
 
     /**
@@ -36,8 +38,17 @@ object BmiConfigManager {
             // 成年人对照表逻辑
             val minGrid = 15.6f
             val maxGrid = 40.3f
-
             val sections = listOf(
+                createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", R.string.bmi_very_severely_underweight),
+                createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", R.string.bmi_severely_underweight),
+                createSection(minGrid, maxGrid, 17f, 18.5f, COLOR_UNDERWEIGHT_LIGHT, "17", R.string.bmi_underweight),
+                createSection(minGrid, maxGrid, 18.5f, 25f, COLOR_NORMAL, "18.5", R.string.bmi_normal),
+                createSection(minGrid, maxGrid, 25f, 30f, COLOR_OVERWEIGHT, "25", R.string.bmi_overweight),
+                createSection(minGrid, maxGrid, 30f, 35f, COLOR_OBESE_1, "30", R.string.bmi_obese_class_i),
+                createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, "35", R.string.bmi_obese_class_ii),
+                createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, "40", R.string.bmi_obese_class_iii)
+            )
+            /*val sections = listOf(
                 createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", "Very Severely Underweight"),
                 createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", "Severely Underweight"),
                 createSection(minGrid, maxGrid, 17f, 18.5f, COLOR_UNDERWEIGHT_LIGHT, "17", "Underweight"),
@@ -46,7 +57,7 @@ object BmiConfigManager {
                 createSection(minGrid, maxGrid, 30f, 35f, COLOR_OBESE_1, "30", "Obese Class I"),
                 createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, "35", "Obese Class II"),
                 createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, "40", "Obese Class III")
-            )
+            )*/
             /*val sections = listOf(
                 createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", context.getString(R.string.bmi_very_severely_underweight)),
                 createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", context.getString(R.string.bmi_severely_underweight)),
@@ -115,10 +126,10 @@ object BmiConfigManager {
         }
 
         val sections = listOf(
-            createSection(minGrid, maxGrid, null, thresholds[0], COLOR_UNDERWEIGHT_MED, "", "Underweight"),
-            createSection(minGrid, maxGrid, thresholds[0], thresholds[1], COLOR_NORMAL, thresholds[0].toString(), "Normal"),
-            createSection(minGrid, maxGrid, thresholds[1], thresholds[2], COLOR_OVERWEIGHT, thresholds[1].toString(), "Overweight"),
-            createSection(minGrid, maxGrid, thresholds[2], null, COLOR_OBESE_1, thresholds[2].toString(), "Obese Class I")
+            createSection(minGrid, maxGrid, null, thresholds[0], COLOR_UNDERWEIGHT_MED, "", R.string.bmi_underweight),
+            createSection(minGrid, maxGrid, thresholds[0], thresholds[1], COLOR_NORMAL, thresholds[0].toString(), R.string.bmi_normal),
+            createSection(minGrid, maxGrid, thresholds[1], thresholds[2], COLOR_OVERWEIGHT, thresholds[1].toString(), R.string.bmi_overweight),
+            createSection(minGrid, maxGrid, thresholds[2], null, COLOR_OBESE_1, thresholds[2].toString(), R.string.bmi_obese_class_i)
         )
         return sections to (minGrid to maxGrid)
     }
@@ -133,7 +144,7 @@ object BmiConfigManager {
         max: Float?,
         color: String,
         label: String,
-        category: String
+        category: Int
     ): BmiSection {
         val totalRange = gridMax - gridMin
         val startValue = min ?: gridMin

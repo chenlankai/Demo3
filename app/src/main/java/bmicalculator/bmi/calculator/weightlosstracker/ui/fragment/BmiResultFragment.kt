@@ -169,7 +169,8 @@ class BmiResultFragment : Fragment() {
         }
 
         state.currentSection?.let {
-            binding.tvStatus.text = it.categoryName
+            //binding.tvStatus.text = it.categoryName
+            binding.tvStatus.setText(it.categoryResId)
             try {
                 binding.tvStatus.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(it.color))
             } catch (e: Exception) {}
@@ -188,7 +189,8 @@ class BmiResultFragment : Fragment() {
         binding.tvMessage.text = getString(R.string.bmi_input_data, "$weightStrFormatted ${state.weightUnit}", heightStrForMsg, genderStr, state.age.toString())
 
         val shortMessage = getString(R.string.bmi_range_normal_adult_description)
-        val isNormal = state.currentSection?.categoryName.equals("Normal", ignoreCase = true)
+        //val isNormal = state.currentSection?.categoryName.equals("Normal", ignoreCase = true)
+        val isNormal = state.currentSection?.categoryResId == R.string.bmi_normal
 
         binding.tvDescription.text = if (isNormal) {
             buildSpannedString {

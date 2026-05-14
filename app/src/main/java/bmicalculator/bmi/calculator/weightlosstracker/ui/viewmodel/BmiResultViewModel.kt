@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.data.dao.BmiDao
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
@@ -42,7 +43,6 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
         viewModelScope.launch {
             val hasRecords = bmiDao.getLatestRecord() != null
             if (arguments != null && arguments.containsKey("EXTRA_BMI")) {
-                // Standalone mode or History mode
                 val isHistory = arguments.getBoolean("history_bmi", false)
                 val bmi = arguments.getFloat("EXTRA_BMI")
                 val gender = arguments.getInt("EXTRA_GENDER")
@@ -61,7 +61,7 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
                 val currentSection = sections.find { bmi >= (it.minRange ?: Float.MIN_VALUE) && bmi < (it.maxRange ?: Float.MAX_VALUE) }
                     ?: sections.lastOrNull()
 
-                val normalSection = sections.find { it.categoryName == "Normal" }
+                val normalSection = sections.find { it.categoryResId == R.string.bmi_normal }
                 val minIdealBmi = normalSection?.minRange ?: 18.5f
                 val maxIdealBmi = normalSection?.maxRange ?: 25.0f
                 var minW = minIdealBmi * heightM * heightM
@@ -114,7 +114,7 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
                     val currentSection = sections.find { bmi >= (it.minRange ?: Float.MIN_VALUE) && bmi < (it.maxRange ?: Float.MAX_VALUE) }
                         ?: sections.lastOrNull()
 
-                    val normalSection = sections.find { it.categoryName == "Normal" }
+                    val normalSection = sections.find { it.categoryResId == R.string.bmi_normal }
                     val minIdealBmi = normalSection?.minRange ?: 18.5f
                     val maxIdealBmi = normalSection?.maxRange ?: 25.0f
                     var minW = minIdealBmi * heightM * heightM

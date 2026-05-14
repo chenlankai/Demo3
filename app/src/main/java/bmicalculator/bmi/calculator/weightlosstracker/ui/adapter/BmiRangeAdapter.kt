@@ -38,7 +38,7 @@ class BmiRangeAdapter : RecyclerView.Adapter<BmiRangeAdapter.ViewHolder>() {
 
             val context = itemView.context
 
-            binding.tvLabel.text = section.categoryName
+            binding.tvLabel.text = context.getString(section.categoryResId)
 
             val rangeText = when {
                 section.minRange == null -> "< ${String.format(Locale.US, "%.1f", section.maxRange)}"
