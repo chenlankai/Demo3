@@ -1,85 +1,62 @@
 package bmicalculator.bmi.calculator.weightlosstracker.util
 
-import android.content.Context
-import android.provider.Settings.Global.getString
 import androidx.annotation.StringRes
 import bmicalculator.bmi.calculator.weightlosstracker.R
-import kotlin.math.roundToInt
 
 object BmiConfigManager {
-    // 颜色常量定义
-    private const val COLOR_UNDERWEIGHT_DEEP = "#286DE6"
-    private const val COLOR_UNDERWEIGHT_MED = "#349CEA"
-    private const val COLOR_UNDERWEIGHT_LIGHT = "#5BB1F5"
-    private const val COLOR_NORMAL = "#A8C526"
+    // 颜色常量定义 (用于 rvStatus 和 tvStatus)
+    private const val COLOR_UNDERWEIGHT_DEEP = "#4343B8"
+    private const val COLOR_UNDERWEIGHT_MED = "#1258E1"
+    private const val COLOR_UNDERWEIGHT_LIGHT = "#0099F2"
+    private const val COLOR_NORMAL = "#54A529"
     private const val COLOR_OVERWEIGHT = "#FECD2E"
-    private const val COLOR_OBESE_1 = "#FD9845"
-    private const val COLOR_OBESE_2 = "#F67D3C"
-    private const val COLOR_OBESE_3 = "#F04E46"
+    private const val COLOR_OBESE_1 = "#FFA100"
+    private const val COLOR_OBESE_2 = "#FF7137"
+    private const val COLOR_OBESE_3 = "#D3333B"
+
+    // 表盘专用颜色 (差异化显示)
+    private const val GAUGE_UNDERWEIGHT_DEEP = "#286DE6"
+    private const val GAUGE_UNDERWEIGHT_MED = "#349CEA"
+    private const val GAUGE_UNDERWEIGHT_LIGHT = "#5BB1F5"
+    private const val GAUGE_NORMAL = "#A8C526"
+    private const val GAUGE_OVERWEIGHT = "#FECD2E"
+    private const val GAUGE_OBESE_1 = "#FD9845"
+    private const val GAUGE_OBESE_2 = "#F67D3C"
+    private const val GAUGE_OBESE_3 = "#F04E46"
 
     data class BmiSection(
         val weightPercentage: Float,
         val color: String,
+        val gaugeColor: String,
         val tickLabel: String,
         val minRange: Float?,
         val maxRange: Float?,
-        //val categoryName: String?
         @StringRes val categoryResId: Int
     )
 
-    /**
-     * 根据性别和年龄获取配置
-     * @param gender 0 为男, 1 为女
-     * @param age 年龄
-     * @return Pair<List<BmiSection>, Pair<表盘Min, 表盘Max>>
-     */
     fun getConfiguration(gender: Int, age: Int): Pair<List<BmiSection>, Pair<Float, Float>> {
         return if (age >= 21) {
-            // 成年人对照表逻辑
             val minGrid = 15.6f
             val maxGrid = 40.3f
             val sections = listOf(
-                createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", R.string.bmi_very_severely_underweight),
-                createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", R.string.bmi_severely_underweight),
-                createSection(minGrid, maxGrid, 17f, 18.5f, COLOR_UNDERWEIGHT_LIGHT, "17", R.string.bmi_underweight),
-                createSection(minGrid, maxGrid, 18.5f, 25f, COLOR_NORMAL, "18.5", R.string.bmi_normal),
-                createSection(minGrid, maxGrid, 25f, 30f, COLOR_OVERWEIGHT, "25", R.string.bmi_overweight),
-                createSection(minGrid, maxGrid, 30f, 35f, COLOR_OBESE_1, "30", R.string.bmi_obese_class_i),
-                createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, "35", R.string.bmi_obese_class_ii),
-                createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, "40", R.string.bmi_obese_class_iii)
+                createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, GAUGE_UNDERWEIGHT_DEEP, "", R.string.bmi_very_severely_underweight),
+                createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, GAUGE_UNDERWEIGHT_MED, "16", R.string.bmi_severely_underweight),
+                createSection(minGrid, maxGrid, 17f, 18.5f, COLOR_UNDERWEIGHT_LIGHT, GAUGE_UNDERWEIGHT_LIGHT, "17", R.string.bmi_underweight),
+                createSection(minGrid, maxGrid, 18.5f, 25f, COLOR_NORMAL, GAUGE_NORMAL, "18.5", R.string.bmi_normal),
+                createSection(minGrid, maxGrid, 25f, 30f, COLOR_OVERWEIGHT, GAUGE_OVERWEIGHT, "25", R.string.bmi_overweight),
+                createSection(minGrid, maxGrid, 30f, 35f, COLOR_OBESE_1, GAUGE_OBESE_1, "30", R.string.bmi_obese_class_i),
+                createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, GAUGE_OBESE_2, "35", R.string.bmi_obese_class_ii),
+                createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, GAUGE_OBESE_3, "40", R.string.bmi_obese_class_iii)
             )
-            /*val sections = listOf(
-                createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", "Very Severely Underweight"),
-                createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", "Severely Underweight"),
-                createSection(minGrid, maxGrid, 17f, 18.5f, COLOR_UNDERWEIGHT_LIGHT, "17", "Underweight"),
-                createSection(minGrid, maxGrid, 18.5f, 25f, COLOR_NORMAL, "18.5", "Normal"),
-                createSection(minGrid, maxGrid, 25f, 30f, COLOR_OVERWEIGHT, "25", "Overweight"),
-                createSection(minGrid, maxGrid, 30f, 35f, COLOR_OBESE_1, "30", "Obese Class I"),
-                createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, "35", "Obese Class II"),
-                createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, "40", "Obese Class III")
-            )*/
-            /*val sections = listOf(
-                createSection(minGrid, maxGrid, null, 16f, COLOR_UNDERWEIGHT_DEEP, "", context.getString(R.string.bmi_very_severely_underweight)),
-                createSection(minGrid, maxGrid, 16f, 17f, COLOR_UNDERWEIGHT_MED, "16", context.getString(R.string.bmi_severely_underweight)),
-                createSection(minGrid, maxGrid, 17f, 18.5f, COLOR_UNDERWEIGHT_LIGHT, "17", context.getString(R.string.bmi_underweight)),
-                createSection(minGrid, maxGrid, 18.5f, 25f, COLOR_NORMAL, "18.5", "Normal"),
-                createSection(minGrid, maxGrid, 25f, 30f, COLOR_OVERWEIGHT, "25", context.getString(R.string.bmi_overweight)),
-                createSection(minGrid, maxGrid, 30f, 35f, COLOR_OBESE_1, "30", "Obese Class I"),
-                createSection(minGrid, maxGrid, 35f, 40f, COLOR_OBESE_2, "35",  "Obese Class II"),
-                createSection(minGrid, maxGrid, 40f, null, COLOR_OBESE_3, "40", "Obese Class III")
-            )*/
             sections to (minGrid to maxGrid)
         } else {
-            // 非成年人逻辑：根据性别和年龄提取阈值
             getChildConfig(gender, age)
         }
     }
 
     private fun getChildConfig(gender: Int, age: Int): Pair<List<BmiSection>, Pair<Float, Float>> {
-
         val (minGrid, maxGrid, thresholds) = when (gender) {
             0 -> when (age) {
-
                 2 -> Triple(14f, 20f, listOf(14.8f, 18.2f, 19.3f))
                 3 -> Triple(13f, 19f, listOf(14.4f, 17.4f, 18.3f))
                 4 -> Triple(13f, 19f, listOf(14.0f, 16.9f, 18.0f))
@@ -126,32 +103,22 @@ object BmiConfigManager {
         }
 
         val sections = listOf(
-            createSection(minGrid, maxGrid, null, thresholds[0], COLOR_UNDERWEIGHT_MED, "", R.string.bmi_underweight),
-            createSection(minGrid, maxGrid, thresholds[0], thresholds[1], COLOR_NORMAL, thresholds[0].toString(), R.string.bmi_normal),
-            createSection(minGrid, maxGrid, thresholds[1], thresholds[2], COLOR_OVERWEIGHT, thresholds[1].toString(), R.string.bmi_overweight),
-            createSection(minGrid, maxGrid, thresholds[2], null, COLOR_OBESE_1, thresholds[2].toString(), R.string.bmi_obese_class_i)
+            createSection(minGrid, maxGrid, null, thresholds[0], COLOR_UNDERWEIGHT_MED, GAUGE_UNDERWEIGHT_MED, "", R.string.bmi_underweight),
+            createSection(minGrid, maxGrid, thresholds[0], thresholds[1], COLOR_NORMAL, GAUGE_NORMAL, thresholds[0].toString(), R.string.bmi_normal),
+            createSection(minGrid, maxGrid, thresholds[1], thresholds[2], COLOR_OVERWEIGHT, GAUGE_OVERWEIGHT, thresholds[1].toString(), R.string.bmi_overweight),
+            createSection(minGrid, maxGrid, thresholds[2], null, COLOR_OBESE_1, GAUGE_OBESE_1, thresholds[2].toString(), R.string.bmi_obese_class_i)
         )
         return sections to (minGrid to maxGrid)
     }
 
-    /**
-     * 工具方法：自动根据数值区间计算 UI 百分比权重，确保角度线性对应
-     */
     private fun createSection(
-        gridMin: Float,
-        gridMax: Float,
-        min: Float?,
-        max: Float?,
-        color: String,
-        label: String,
-        category: Int
+        gridMin: Float, gridMax: Float, min: Float?, max: Float?,
+        color: String, gaugeColor: String, label: String, category: Int
     ): BmiSection {
         val totalRange = gridMax - gridMin
         val startValue = min ?: gridMin
         val endValue = max ?: gridMax
-
         val weight = ((endValue - startValue) / totalRange) * 100f
-
-        return BmiSection(weight, color, label, min, max, category)
+        return BmiSection(weight, color, gaugeColor, label, min, max, category)
     }
 }

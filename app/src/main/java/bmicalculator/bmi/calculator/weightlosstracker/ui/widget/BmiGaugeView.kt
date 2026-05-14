@@ -180,7 +180,7 @@ class BmiGaugeView @JvmOverloads constructor(
             }
 
             // 2. 绘制弧形色块
-            arcPaint.color = Color.parseColor(section.color)
+            arcPaint.color = Color.parseColor(section.gaugeColor)
             canvas.drawArc(rectF, startAngle, sweepAngle + 0.8f, false, arcPaint)
 
             startAngle += sweepAngle

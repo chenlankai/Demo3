@@ -9,8 +9,10 @@ import androidx.lifecycle.viewModelScope
 import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.data.dao.BmiDao
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
+import android.content.Context
 import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
 
@@ -44,7 +46,8 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
             val hasRecords = bmiDao.getLatestRecord() != null
             if (arguments != null && arguments.containsKey("EXTRA_BMI")) {
                 val isHistory = arguments.getBoolean("history_bmi", false)
-                val bmi = arguments.getFloat("EXTRA_BMI")
+                val rawBmi = arguments.getFloat("EXTRA_BMI")
+                val bmi = (rawBmi * 10f).roundToInt() / 10f
                 val gender = arguments.getInt("EXTRA_GENDER")
                 val age = arguments.getInt("EXTRA_AGE")
                 val heightM = arguments.getFloat("EXTRA_HEIGHT_M")
@@ -109,7 +112,8 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
                         record.weight
                     }
 
-                    val bmi = if (heightM > 0) weightKg / (heightM * heightM) else 0f
+                    val rawBmi = if (heightM > 0) weightKg / (heightM * heightM) else 0f
+                    val bmi = (rawBmi * 10f).roundToInt() / 10f
                     val (sections, _) = BmiConfigManager.getConfiguration(if (record.gender == "Male") 0 else 1, record.age)
                     val currentSection = sections.find { bmi >= (it.minRange ?: Float.MIN_VALUE) && bmi < (it.maxRange ?: Float.MAX_VALUE) }
                         ?: sections.lastOrNull()
@@ -151,6 +155,7 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
             }
         }
     }
+
 
     fun saveRecord(record: BmiRecord, onComplete: () -> Unit) {
         viewModelScope.launch {

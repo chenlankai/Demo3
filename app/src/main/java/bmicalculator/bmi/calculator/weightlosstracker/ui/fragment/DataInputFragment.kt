@@ -125,7 +125,7 @@ class DataInputFragment : Fragment() {
         setupListeners()
         observeViewModel()
         
-        viewModel.loadLatestRecord()
+        viewModel.loadLatestRecord(requireContext())
     }
 
     private fun observeViewModel() {
@@ -138,8 +138,8 @@ class DataInputFragment : Fragment() {
                 val layoutManager = binding.rvAge.layoutManager as? LinearLayoutManager
                 val first = layoutManager?.findFirstVisibleItemPosition() ?: -1
                 val last = layoutManager?.findLastVisibleItemPosition() ?: -1
-                if (age - 1 !in first..last) {
-                    binding.rvAge.scrollToPosition(age - 1)
+                if (age - 2 !in first..last) {
+                    binding.rvAge.scrollToPosition(age - 2)
                 }
             }
         }
@@ -260,13 +260,32 @@ class DataInputFragment : Fragment() {
         }
     }
     private fun updateHeightFromFtIn() {
-        val feet = binding.etHeightFt.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
-        val inches = binding.etHeightIn.text.toString().filter { it.isDigit() }.toFloatOrNull() ?: 0f
+        val feetRaw = binding.etHeightFt.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 5
+        val inchesRaw = binding.etHeightIn.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 7
+
+        var feet = feetRaw
+        var inches = inchesRaw
+        val totalInches = (feet * 12) + inches
+
+        if (totalInches < 12) {
+            feet = 1
+            inches = 0
+            binding.etHeightFt.setText("1'")
+            binding.etHeightIn.setText("0\"")
+            showValidationError("ft/in", 1f, 8.2f)
+        } else if (totalInches > 98) {
+            feet = 8
+            inches = 2
+            binding.etHeightFt.setText("8'")
+            binding.etHeightIn.setText("2\"")
+            showValidationError("ft/in", 1f, 8.2f)
+        }
+
         viewModel.setHeight(((feet * 12) + inches) * 2.54f)
     }
 
     private fun setupAgeRecyclerView() {
-        val ages = (1..120).toList()
+        val ages = (2..99).toList()
         val adapter = AgeAdapter(ages) { position ->
             binding.rvAge.smoothScrollToPosition(position)
         }
@@ -282,7 +301,7 @@ class DataInputFragment : Fragment() {
             binding.rvAge.setPadding(padding, 0, padding, 0)
             binding.rvAge.clipToPadding = false
             val currentAge = viewModel.selectedAge.value ?: 25
-            binding.rvAge.scrollToPosition(currentAge - 1)
+            binding.rvAge.scrollToPosition(currentAge - 2)
             updateItemsAlpha()
         }
 
@@ -398,6 +417,8 @@ class DataInputFragment : Fragment() {
                 it.clearFocus()
                 imm.hideSoftInputFromWindow(it.windowToken, 0)
             }
+
+            viewModel.saveDraft(requireContext())
 
             val weightKg = viewModel.weight.value ?: 0f
             val heightCm = viewModel.height.value ?: 0f
@@ -556,22 +577,23 @@ class DataInputFragment : Fragment() {
             if (hasFocus) {
                 if (showUnitDuringEdit) {
                     val currentText = text.toString()
-                    if (!currentText.endsWith(unit)) {
-                        val numeric = currentText.filter { it.isDigit() || it == '.' }
-                        setText("$numeric$unit")
-                        setSelection(numeric.length)
-                    } else {
-                        setSelection(currentText.length - unit.length)
+                    val numeric = currentText.filter { it.isDigit() || it == '.' }.let {
+                        if (it.length > maxLen) it.take(maxLen) else it
                     }
+                    val newText = "$numeric$unit"
+                    if (newText != currentText) setText(newText)
+                    setSelection(0, numeric.length)
                 } else {
-                    val rawInput = text.toString().filter { it.isDigit() || it == '.' }
-                    setText(rawInput)
+                    val rawInput = text.toString().filter { it.isDigit() || it == '.' }.let {
+                        if (it.length > maxLen) it.take(maxLen) else it
+                    }
+                    if (rawInput != text.toString()) setText(rawInput)
                     if (rawInput.isNotEmpty()) {
-                        setSelection(rawInput.length)
+                        setSelection(0, rawInput.length)
                     }
                 }
             } else {
-                performValidation(unit, min, max, onValid)
+                performValidation(unit, min, max, decimalDigits, showUnitDuringEdit, onValid)
             }
         }
 
@@ -602,17 +624,24 @@ class DataInputFragment : Fragment() {
             this.doOnTextChanged { text, _, _, _ ->
                 if (isFocused) {
                     val s = text.toString()
-                    if (!s.endsWith(unit)) {
-                        val numeric = s.filter { it.isDigit() || it == '.' }
-                        val newText = "$numeric$unit"
+                    val numeric = s.filter { it.isDigit() || it == '.' }
+                    
+                    if (!s.endsWith(unit) || numeric.length > maxLen) {
+                        val trimmedNumeric = if (numeric.length > maxLen) numeric.take(maxLen) else numeric
+                        val newText = "$trimmedNumeric$unit"
                         setText(newText)
-                        setSelection(numeric.length)
+                        setSelection(trimmedNumeric.length)
                     } else {
                         val numericLength = s.length - unit.length
                         val start = selectionStart.coerceAtMost(numericLength)
                         val end = selectionEnd.coerceAtMost(numericLength)
                         if (selectionStart != start || selectionEnd != end) {
                             android.text.Selection.setSelection(getText(), start, end)
+                        }
+
+                        // Polish: Auto-focus jump for ft+in
+                        if (unit == "'" && numeric.length == maxLen && this.id == binding.etHeightFt.id) {
+                            binding.etHeightIn.requestFocus()
                         }
                     }
                 }
@@ -645,7 +674,7 @@ class DataInputFragment : Fragment() {
 
         this.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                performValidation(unit, min, max, onValid)
+                performValidation(unit, min, max, decimalDigits, showUnitDuringEdit, onValid)
                 this.clearFocus()
                 val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(this.windowToken, 0)
@@ -660,6 +689,8 @@ class DataInputFragment : Fragment() {
         unit: String,
         min: Float,
         max: Float,
+        decimalDigits: Int,
+        showUnitDuringEdit: Boolean,
         onValid: (Float) -> Unit
     ) {
         val rawInput = text.toString().filter { it.isDigit() || it == '.' }
@@ -697,11 +728,13 @@ class DataInputFragment : Fragment() {
             showValidationError(unit, min, max)
         }
 
-        val formattedValue = when (this.id) {
-            binding.etWeight.id, binding.etWeightKg.id -> String.format(Locale.US, "%.2f", resultValue)
-            binding.etHeightCm.id -> String.format(Locale.US, "%.1f", resultValue)
-            else -> "${resultValue.toInt()}$unit"
+        val formatStr = if (decimalDigits > 0) "%.${decimalDigits}f" else "%.0f"
+        val formattedValue = if (showUnitDuringEdit) {
+            "${String.format(Locale.US, formatStr, resultValue)}$unit"
+        } else {
+            String.format(Locale.US, formatStr, resultValue)
         }
+
         setText(formattedValue)
         onValid(resultValue)
     }
@@ -713,8 +746,10 @@ class DataInputFragment : Fragment() {
 
         val message = if (unit == "kg" || unit == "lb") {
             "Please input a valid weight ($minStr - $maxStr $unit) to calculate your BMI accurately"
+        } else if (unit == "ft/in") {
+            "Please input a valid Height (1'0\" - 8'2\") to calculate your BMI accurately"
         } else {
-            val displayUnit = if (unit == "'" || unit == "\"" || unit == "ft/in") "ft/in" else unit
+            val displayUnit = if (unit == "ft" || unit == "'") "ft" else if (unit == "in" || unit == "\"") "in" else "cm"
             "Please input a valid Height ($minStr - $maxStr $displayUnit) to calculate your BMI accurately"
         }
         (requireActivity() as? BaseActivity)?.showStatusToast(
@@ -726,7 +761,13 @@ class DataInputFragment : Fragment() {
     }
 
 
+    override fun onPause() {
+        super.onPause()
+        viewModel.saveDraft(requireContext())
+    }
+
     override fun onDestroyView() {
+        viewModel.saveDraft(requireContext())
         super.onDestroyView()
         _binding = null
     }

@@ -280,7 +280,7 @@ class BmiResultFragment : Fragment() {
             if (state?.hasDatabaseRecords == true) {
                 startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.HistoryActivity::class.java))
             } else {
-                // 如果没有记录，回到初始动画结束后的第一个页面 (DataInputActivity，填满屏幕)
+
                 startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 })
@@ -354,13 +354,13 @@ class BmiResultFragment : Fragment() {
             age = state.age,
             gender = if (state.gender == 0) "Male" else "Female"
         )
-
         viewModel.saveRecord(record) {
-            requireActivity().getSharedPreferences("bmi_prefs", Context.MODE_PRIVATE).edit().putBoolean("is_first_time", false).apply()
-            startActivity(Intent(requireContext(), MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra("SELECT_TAB", 1)
-            })
+            val targetTab = if (state.hasDatabaseRecords) 2 else 1
+            val intent = Intent(requireContext(), MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                putExtra("SELECT_TAB", targetTab)
+            }
+            startActivity(intent)
             requireActivity().finish()
         }
     }

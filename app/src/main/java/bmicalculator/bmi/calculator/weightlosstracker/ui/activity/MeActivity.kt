@@ -29,7 +29,7 @@ import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
 class MeActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMeBinding
-    private var isLoggedIn = false // 记录登录状态
+    private var isLoggedIn = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,30 +100,40 @@ class MeActivity : BaseActivity() {
         dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
 
         dialogBinding.btnLog.setOnClickListener {
-            isLoggedIn = !isLoggedIn
-            binding.ivAvatar.isVisible = isLoggedIn
-
-            val statusMessage: String
-            val iconRes: Int
-            val colorStr: String
-
-            if (isLoggedIn) {
-                statusMessage = "Logged in successfully"
-                iconRes = R.drawable.login
-                colorStr = "#4CAF50"
+            if (!isLoggedIn) {
+                //
             } else {
-                statusMessage = "Logged out"
-                iconRes = R.drawable.logout
-                colorStr = "#2196F3"
+                isLoggedIn = false
+                updateLoginStateUI(dialog, dialogBinding)
             }
-
-            showStatusToast(statusMessage, iconRes, colorStr)
-
-            dialog.dismiss()
         }
 
         dialog.behavior.isDraggable = false
         dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         dialog.show()
+    }
+
+    private fun updateLoginStateUI(dialog: BottomSheetDialog, dialogBinding: ViewGoogleAccountDialogBinding) {
+        binding.ivAvatar.isVisible = isLoggedIn
+        if (isLoggedIn) {
+            dialogBinding.btnLog.text = "Log out"
+            dialogBinding.btnLog.setTextColor(Color.parseColor("#F4333C"))
+            showStatusToast("Logged in successfully", R.drawable.login, "#4CAF50")
+        } else {
+            dialogBinding.btnLog.text = "Log in"
+            dialogBinding.btnLog.setTextColor(Color.BLACK)
+            showStatusToast("Logged out", R.drawable.logout, "#2196F3")
+        }
+        dialog.dismiss()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001) {
+            binding.ivAvatar.isVisible = isLoggedIn
+            if (isLoggedIn) {
+                showStatusToast("Logged in successfully", R.drawable.login, "#4CAF50")
+            }
+        }
     }
 }

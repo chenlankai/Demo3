@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import android.content.Context
 import bmicalculator.bmi.calculator.weightlosstracker.data.dao.BmiDao
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 import kotlinx.coroutines.launch
@@ -103,32 +104,66 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
         _selectedTime.value = time
     }
 
-    fun loadLatestRecord() {
-        viewModelScope.launch {
-            val record = bmiDao.getLatestRecord()
-            _latestRecord.value = record
-            record?.let {
-                _isMale.value = it.gender == "Male"
-                _selectedAge.value = it.age
-                _weightUnit.value = it.weightUnit
-                _heightUnit.value = it.heightUnit
-                
-                if (it.weightUnit == "lb") {
-                    _weight.value = it.weight * 0.45359237f
-                } else {
-                    _weight.value = it.weight
-                }
+    fun saveDraft(context: Context) {
+        val prefs = context.getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putBoolean("is_male", _isMale.value ?: true)
+            putInt("age", _selectedAge.value ?: 25)
+            putFloat("weight_kg", _weight.value ?: 63.5f)
+            putFloat("height_cm", _height.value ?: 170f)
+            putString("weight_unit", _weightUnit.value ?: "lb")
+            putString("height_unit", _heightUnit.value ?: "ft+in")
+            putBoolean("weight_interacted", _isWeightInteracted.value ?: false)
+            putBoolean("height_interacted", _isHeightInteracted.value ?: false)
+            apply()
+        }
+    }
 
-                if (it.heightUnit == "cm") {
-                    _height.value = it.heightCm ?: 170.0f
-                } else {
-                    val ft = it.heightFt ?: 5
-                    val inch = it.heightIn ?: 7
-                    _height.value = ((ft * 12) + inch) * 2.54f
-                }
+    fun loadLatestRecord(context: Context) {
+        viewModelScope.launch {
+            val prefs = context.getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
+            
+            // 优先级 1: 检查是否有上次修改的草稿
+            if (prefs.contains("is_male")) {
+                _isMale.value = prefs.getBoolean("is_male", true)
+                _selectedAge.value = prefs.getInt("age", 25)
+                _weight.value = prefs.getFloat("weight_kg", 63.5f)
+                _height.value = prefs.getFloat("height_cm", 170f)
+                _weightUnit.value = prefs.getString("weight_unit", "lb")
+                _heightUnit.value = prefs.getString("height_unit", "ft+in")
+                _isWeightInteracted.value = prefs.getBoolean("weight_interacted", false)
+                _isHeightInteracted.value = prefs.getBoolean("height_interacted", false)
                 
-                _isWeightInteracted.value = true
-                _isHeightInteracted.value = true
+                // 同时也要获取最新记录供其他逻辑使用，但不覆盖当前 UI 状态
+                _latestRecord.value = bmiDao.getLatestRecord()
+            } else {
+                // 优先级 2: 如果没有草稿，加载数据库最新记录
+                val record = bmiDao.getLatestRecord()
+                _latestRecord.value = record
+                record?.let {
+                    _isMale.value = it.gender == "Male"
+                    _selectedAge.value = it.age
+                    _weightUnit.value = it.weightUnit
+                    _heightUnit.value = it.heightUnit
+                    
+                    if (it.weightUnit == "lb") {
+                        _weight.value = it.weight * 0.45359237f
+                    } else {
+                        _weight.value = it.weight
+                    }
+
+                    if (it.heightUnit == "cm") {
+                        _height.value = it.heightCm ?: 170.0f
+                    } else {
+                        val ft = it.heightFt ?: 5
+                        val inch = it.heightIn ?: 7
+                        _height.value = ((ft * 12) + inch) * 2.54f
+                    }
+                    
+                    _isWeightInteracted.value = true
+                    _isHeightInteracted.value = true
+                }
+                // 优先级 3: 如果连数据库记录都没有，则保留 ViewModel 初始化的默认值
             }
         }
     }
