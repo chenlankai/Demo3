@@ -29,7 +29,7 @@ class WheelView @JvmOverloads constructor(
     var itemHeight = (ITEM_HEIGHT_DP * density).toInt()
     private val verticalPadding = (PADDING_VERTICAL_DP * density).toInt()
     var textSize = TEXT_SIZE_SP * scaledDensity
-    
+
     var textColorNormal = Color.parseColor("#999999")
     var textColorSelected = Color.BLACK
 
@@ -41,6 +41,10 @@ class WheelView @JvmOverloads constructor(
     private var offsetY = 0f
     private val scroller = OverScroller(context)
     private var isDragging = false
+
+    // 新增：用于判断单点（Tap）点击事件的坐标和时间追踪
+    private var downY = 0f
+    private var downTime = 0L
 
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -82,9 +86,9 @@ class WheelView @JvmOverloads constructor(
     fun setData(data: List<String>, initialPosition: Int = 0) {
         val sameData = this.items == data
         val samePos = this.selectedPosition == initialPosition
-        
+
         if (sameData && samePos) return
-        
+
         if (sameData && !samePos) {
             if (!isDragging && scroller.isFinished) {
                 this.selectedPosition = initialPosition.coerceIn(0, data.size - 1)
@@ -102,7 +106,6 @@ class WheelView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-
         val totalHeight = itemHeight * VISIBLE_ITEMS + verticalPadding * 2
         val width = getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
         setMeasuredDimension(width, totalHeight)
@@ -119,7 +122,7 @@ class WheelView @JvmOverloads constructor(
 
         for (i in items.indices) {
             val itemY = center + (i - selectedPosition) * itemHeight + clampedOffsetY
-            
+
             if (itemY < -itemHeight || itemY > height + itemHeight) continue
 
             val distance = abs(itemY - center)
@@ -136,9 +139,44 @@ class WheelView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val handled = gestureDetector.onTouchEvent(event)
-        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-            isDragging = false
-            if (scroller.isFinished) startSnap()
+
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                downY = event.y
+                downTime = System.currentTimeMillis()
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                isDragging = false
+
+                val deltaY = event.y - downY
+                val deltaTime = System.currentTimeMillis() - downTime
+
+                // 【核心修改点】：识别点击（Tap）手势
+                if (abs(deltaY) < 10 * density && deltaTime < 200 && items.isNotEmpty()) {
+                    val center = height / 2f
+                    // 计算点击的位置距离当前滚轮视图中心线的相对像素距离
+                    val clickOffsetFromCenter = event.y - center
+
+                    // 根据当前存在的偏移量 offsetY，反推出点击目标项在 items 中的差值行数
+                    val lineOffset = ((clickOffsetFromCenter - offsetY) / itemHeight).roundToInt()
+                    val targetPosition = (selectedPosition + lineOffset).coerceIn(0, items.size - 1)
+
+                    if (targetPosition != selectedPosition) {
+                        // 计算符合越界保护的目标偏移值
+                        val targetOffsetY = (selectedPosition - targetPosition) * itemHeight
+
+                        // 利用已有的弹性滚动器，顺滑滚动到点击的位置
+                        scroller.startScroll(0, offsetY.toInt(), 0, (targetOffsetY - offsetY).toInt(), 250)
+                        invalidate()
+                        return true
+                    }
+                }
+
+                // 若非点击手势，执行原有的手势惯性对齐
+                if (scroller.isFinished) {
+                    startSnap()
+                }
+            }
         }
         return handled
     }

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.data.dao.BmiDao
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 
-@Database(entities = [BmiRecord::class], version = 1, exportSchema = false)
+@Database(entities = [BmiRecord::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun bmiDao(): BmiDao
 
@@ -21,7 +21,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "bmi_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

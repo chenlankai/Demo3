@@ -54,6 +54,9 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
         val day = calendar.get(Calendar.DAY_OF_MONTH)
         val year = calendar.get(Calendar.YEAR)
         _selectedDate.value = "$monthStr $day, $year"
+        _weightUnit.value = "lb"
+        _weight.value = 140f
+
 
         val currentHour = calendar.get(Calendar.HOUR_OF_DAY) // 获取当前 24 小时制的小时
 
@@ -86,7 +89,7 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     fun setWeightUnit(unit: String) {
         if (_isWeightInteracted.value != true) {
             if (unit == "lb") {
-                _weight.value = 140f * 0.45359237f
+                _weight.value = 140f
             } else {
                 _weight.value = 65.0f
             }
@@ -118,7 +121,7 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
         prefs.edit().apply {
             putBoolean("is_male", _isMale.value ?: true)
             putInt("age", _selectedAge.value ?: 25)
-            putFloat("weight", _weight.value ?: 140.0f)
+            putFloat("weight", _weight.value ?: 140f)
             putFloat("height", _height.value ?: 170.18f)
             putString("weight_unit", _weightUnit.value ?: "lb")
             putString("height_unit", _heightUnit.value ?: "ft+in")
@@ -154,12 +157,7 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
                     _selectedAge.value = it.age
                     _weightUnit.value = it.weightUnit
                     _heightUnit.value = it.heightUnit
-
-                    if (it.weightUnit == "lb") {
-                        _weight.value = it.weight * 0.45359237f
-                    } else {
-                        _weight.value = it.weight
-                    }
+                    _weight.value = it.weight
 
                     if (it.heightUnit == "cm") {
                         _height.value = it.heightCm ?: 170.18f

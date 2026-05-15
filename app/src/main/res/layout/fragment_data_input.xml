@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#EAEAEE"
     android:orientation="vertical">
+    <bmicalculator.bmi.calculator.weightlosstracker.util.ImmersiveView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#EAEAEE" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
@@ -21,6 +26,7 @@
             android:layout_marginBottom="18dp"
             android:fontFamily="@font/montserrat_extrabold"
             android:gravity="center"
+            android:textColor="#000000"
             android:text="@string/calculator"
             android:textSize="24sp"
             app:layout_constraintBottom_toBottomOf="parent"

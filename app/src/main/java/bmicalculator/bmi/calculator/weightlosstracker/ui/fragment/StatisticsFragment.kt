@@ -84,7 +84,9 @@ class StatisticsFragment : Fragment() {
         StatisticsViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
     }
 
-    private val mainViewModel: MainViewModel by activityViewModels()
+    private val mainViewModel: MainViewModel by activityViewModels {
+        MainViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
+    }
 
     private var currentMode = "Day"
     private var allRecords: List<BmiRecord> = emptyList()
@@ -96,7 +98,7 @@ class StatisticsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupEdgeToEdge()
+        //setupEdgeToEdge()
 
         initChartStyle(binding.bmiChart, "BMI")
         initChartStyle(binding.weightChart, "kg")
@@ -364,11 +366,10 @@ class StatisticsFragment : Fragment() {
     }
 
     private fun calculateVal(r: BmiRecord, isBmi: Boolean): Float {
-        val w = if (r.weightUnit == "lb") r.weight * 0.453592f else r.weight
-        if (!isBmi) return w
-        val h = if (r.heightUnit == "cm") (r.heightCm ?: 0f) / 100f
-        else ((r.heightFt ?: 0) * 12 + (r.heightIn ?: 0)) * 0.0254f
-        return if (h > 0) w / (h * h) else 0f
+        if (!isBmi) {
+            return if (r.weightUnit == "lb") r.weight * 0.453592f else r.weight
+        }
+        return r.bmi
     }
 
     private fun createDataSet(entries: List<Entry>, sc: String, ec: String,isBmi : Boolean) = LineDataSet(entries, "").apply {
@@ -418,13 +419,13 @@ class StatisticsFragment : Fragment() {
         }
     }
 
-    private fun setupEdgeToEdge() {
+    /*private fun setupEdgeToEdge() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             binding.layoutToolbar.updatePadding(top = bars.top)
             insets
         }
-    }
+    }*/
 
     private fun parseDate(s: String) = try { SimpleDateFormat("MMM dd, yyyy", Locale.US).parse(s) } catch (e: Exception) { null }
 

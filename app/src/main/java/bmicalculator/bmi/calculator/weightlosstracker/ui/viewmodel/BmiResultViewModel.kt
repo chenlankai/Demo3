@@ -11,6 +11,7 @@ import bmicalculator.bmi.calculator.weightlosstracker.data.dao.BmiDao
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 import android.content.Context
 import bmicalculator.bmi.calculator.weightlosstracker.util.BmiConfigManager
+import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.BmiResultActivity
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -44,21 +45,21 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
     fun loadData(arguments: Bundle?) {
         viewModelScope.launch {
             val hasRecords = bmiDao.getLatestRecord() != null
-            if (arguments != null && arguments.containsKey("EXTRA_BMI")) {
-                val isHistory = arguments.getBoolean("history_bmi", false)
-                val rawBmi = arguments.getFloat("EXTRA_BMI")
+            if (arguments != null && arguments.containsKey(BmiResultActivity.EXTRA_BMI)) {
+                val isHistory = arguments.getBoolean(BmiResultActivity.EXTRA_HISTORY_BMI, false)
+                val rawBmi = arguments.getFloat(BmiResultActivity.EXTRA_BMI)
                 val bmi = (rawBmi * 10f).roundToInt() / 10f
-                val gender = arguments.getInt("EXTRA_GENDER")
-                val age = arguments.getInt("EXTRA_AGE")
-                val heightM = arguments.getFloat("EXTRA_HEIGHT_M")
-                val weightVal = arguments.getFloat("EXTRA_WEIGHT_VAL")
-                val weightUnit = arguments.getString("EXTRA_WEIGHT_UNIT") ?: "kg"
-                val hVal1 = arguments.getFloat("EXTRA_HEIGHT_VAL1")
-                val hVal2 = arguments.getInt("EXTRA_HEIGHT_VAL2")
-                val hUnit = arguments.getString("EXTRA_HEIGHT_UNIT") ?: "cm"
-                val date = arguments.getString("EXTRA_DATE") ?: ""
-                val time = arguments.getString("EXTRA_TIME") ?: ""
-                val recordId = arguments.getLong("EXTRA_RECORD_ID", -1L)
+                val gender = arguments.getInt(BmiResultActivity.EXTRA_GENDER)
+                val age = arguments.getInt(BmiResultActivity.EXTRA_AGE)
+                val heightM = arguments.getFloat(BmiResultActivity.EXTRA_HEIGHT_M)
+                val weightVal = arguments.getFloat(BmiResultActivity.EXTRA_WEIGHT_VAL)
+                val weightUnit = arguments.getString(BmiResultActivity.EXTRA_WEIGHT_UNIT) ?: "kg"
+                val hVal1 = arguments.getFloat(BmiResultActivity.EXTRA_HEIGHT_VAL1)
+                val hVal2 = arguments.getInt(BmiResultActivity.EXTRA_HEIGHT_VAL2)
+                val hUnit = arguments.getString(BmiResultActivity.EXTRA_HEIGHT_UNIT) ?: "cm"
+                val date = arguments.getString(BmiResultActivity.EXTRA_DATE) ?: ""
+                val time = arguments.getString(BmiResultActivity.EXTRA_TIME) ?: ""
+                val recordId = arguments.getLong(BmiResultActivity.EXTRA_RECORD_ID, -1L)
 
                 val (sections, _) = BmiConfigManager.getConfiguration(gender, age)
                 val currentSection = sections.find { bmi >= (it.minRange ?: Float.MIN_VALUE) && bmi < (it.maxRange ?: Float.MAX_VALUE) }
@@ -106,14 +107,7 @@ class BmiResultViewModel(private val bmiDao: BmiDao) : ViewModel() {
                         totalInches * 0.0254f
                     }
 
-                    val weightKg = if (record.weightUnit == "lb") {
-                        record.weight * 0.45359237f
-                    } else {
-                        record.weight
-                    }
-
-                    val rawBmi = if (heightM > 0) weightKg / (heightM * heightM) else 0f
-                    val bmi = (rawBmi * 10f).roundToInt() / 10f
+                    val bmi = record.bmi
                     val (sections, _) = BmiConfigManager.getConfiguration(if (record.gender == "Male") 0 else 1, record.age)
                     val currentSection = sections.find { bmi >= (it.minRange ?: Float.MIN_VALUE) && bmi < (it.maxRange ?: Float.MAX_VALUE) }
                         ?: sections.lastOrNull()

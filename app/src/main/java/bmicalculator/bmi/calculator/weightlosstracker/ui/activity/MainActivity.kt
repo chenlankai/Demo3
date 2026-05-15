@@ -9,6 +9,7 @@ import androidx.core.view.updatePadding
 import androidx.viewpager2.widget.ViewPager2
 import androidx.lifecycle.ViewModelProvider
 import bmicalculator.bmi.calculator.weightlosstracker.R
+import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.MainPagerAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
 import com.google.android.material.tabs.TabLayout
@@ -36,9 +37,20 @@ class MainActivity : BaseActivity() {
         viewPager.adapter = adapter
         viewPager.isUserInputEnabled = false
 
-        val viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        val bmiDao = AppDatabase.getDatabase(this).bmiDao()
+        val viewModel = ViewModelProvider(this, MainViewModel.Factory(bmiDao))[MainViewModel::class.java]
         viewModel.selectedTab.observe(this) { index ->
             viewPager.setCurrentItem(index, false)
+        }
+
+        viewModel.bmiValue.observe(this) { bmi ->
+            // 这里可以处理观察到的 BMI 变化，例如记录日志或更新 UI
+            android.util.Log.d("MainActivity", "Observed BMI value: $bmi")
+        }
+
+        viewModel.bmiCategory.observe(this) { categoryResId ->
+            val category = getString(categoryResId)
+            android.util.Log.d("MainActivity", "Observed BMI category: $category")
         }
 
         val selectTab = intent.getIntExtra("SELECT_TAB", 0)

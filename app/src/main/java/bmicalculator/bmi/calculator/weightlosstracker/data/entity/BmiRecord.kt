@@ -16,5 +16,6 @@ data class BmiRecord(
     val date: String,                // 格式如 "YYYY-MM-DD"
     val timeOfDay: String,           // "Morning", "Afternoon", "Evening" 等
     val age: Int,
-    val gender: String               // "Male" 或 "Female"
+    val gender: String,              // "Male" 或 "Female"
+    val bmi: Float                   // BMI 数值
 )

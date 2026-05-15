@@ -14,6 +14,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -26,6 +27,7 @@ import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.FragmentBmiResultBinding
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDeleteConfirmBinding
+import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.BmiResultActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MainActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.BmiRangeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.RecommendAppAdapter
@@ -46,6 +48,10 @@ class BmiResultFragment : Fragment() {
         BmiResultViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
     }
 
+    private val mainViewModel: MainViewModel by activityViewModels {
+        MainViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
+    }
+
     private val regularTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_regular) }
     private val extraBoldTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_extrabold) }
     private val colorBlack = Color.BLACK
@@ -59,7 +65,7 @@ class BmiResultFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+        /*ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             if (binding.layoutToolbar.isVisible) {
                 binding.layoutToolbar.updatePadding(top = systemBars.top)
@@ -68,7 +74,7 @@ class BmiResultFragment : Fragment() {
                 v.updatePadding(top = systemBars.top)
             }
             insets
-        }
+        }*/
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 showDeleteConfirmDialog()
@@ -89,6 +95,22 @@ class BmiResultFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             updateUI(state)
+            state.currentSection?.let { section ->
+                mainViewModel.updateBmiData(state.bmi, section.categoryResId)
+            }
+        }
+
+        // 观察 MainViewModel 中的最新记录，用于 Tab 模式下的实时更新
+        mainViewModel.latestRecord.observe(viewLifecycleOwner) { record ->
+            val args = arguments
+            if (args == null || !args.containsKey(BmiResultActivity.EXTRA_BMI)) {
+                // 如果是 Tab 模式（没有传入特定的计算结果），则根据数据库最新记录更新 UI
+                if (record != null) {
+                    viewModel.loadData(null) // 触发 ViewModel 重新计算状态
+                } else {
+                    updateUI(BmiResultViewModel.BmiResultState(hasDatabaseRecords = false))
+                }
+            }
         }
     }
 
@@ -110,6 +132,7 @@ class BmiResultFragment : Fragment() {
         binding.tvSave.isVisible = !state.isHistoryMode
         binding.layoutToolbar.isVisible = true
         binding.tvDescription.isVisible = true
+        binding.tabClickOverlay.isVisible = false
 
         if (state.isHistoryMode) {
             binding.rvStatus.isVisible = false
@@ -151,8 +174,10 @@ class BmiResultFragment : Fragment() {
         if (state.recordId != -1L || state.bmi > 0) {
             binding.scrollView.isVisible = true
             binding.tvToolbarDate.text = state.date
+            binding.tabClickOverlay.isVisible = true
         } else {
             binding.scrollView.isVisible = false
+            binding.tabClickOverlay.isVisible = false
         }
         binding.root.requestApplyInsets()
     }
@@ -266,6 +291,25 @@ class BmiResultFragment : Fragment() {
     }
 
     private fun setupListeners() {
+        // 使用 OnTouchListener 处理全局点击，并排除 "Recent" 按钮
+        binding.tabClickOverlay.setOnTouchListener { _, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                val state = viewModel.uiState.value
+                if (state != null && !state.isStandaloneMode) {
+                    val rect = android.graphics.Rect()
+                    binding.tvRecent.getGlobalVisibleRect(rect)
+                    if (!rect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                        mainViewModel.selectTab(0)
+                        return@setOnTouchListener true
+                    } else {
+                        // 如果点击在 Recent 按钮范围内，触发 Recent 的点击事件
+                        binding.tvRecent.performClick()
+                        return@setOnTouchListener true
+                    }
+                }
+            }
+            true // 消耗事件，防止传到下面
+        }
 
         binding.ivActionBar3ArrowLeft.setOnClickListener {
             requireActivity().finish()
@@ -358,7 +402,8 @@ class BmiResultFragment : Fragment() {
             date = state.date,
             timeOfDay = state.time,
             age = state.age,
-            gender = if (state.gender == 0) "Male" else "Female"
+            gender = if (state.gender == 0) "Male" else "Female",
+            bmi = state.bmi
         )
         viewModel.saveRecord(record) {
             val targetTab = if (state.hasDatabaseRecords) 2 else 1
@@ -405,10 +450,7 @@ class BmiResultFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        val args = arguments
-        if (args == null || !args.containsKey("EXTRA_BMI")) {
-            viewModel.loadData(args)
-        }
+        // Removed unnecessary redundant call to loadData since we are now observing latestRecord
     }
 
     override fun onPause() {

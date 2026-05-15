@@ -70,11 +70,11 @@ class DataInputFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        ViewCompat.setOnApplyWindowInsetsListener(binding.headerLayout) { v, insets ->
+        /*ViewCompat.setOnApplyWindowInsetsListener(binding.headerLayout) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = systemBars.top)
             insets
-        }
+        }*/
 
         val touchListener = View.OnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -145,16 +145,15 @@ class DataInputFragment : Fragment() {
             }
         }
 
-        viewModel.weight.observe(viewLifecycleOwner) { kg ->
+        viewModel.weight.observe(viewLifecycleOwner) { value ->
             val unit = viewModel.weightUnit.value ?: "lb"
             if (unit == "lb") {
                 if (!binding.etWeight.isFocused) {
-                    val lbValue = kg / 0.45359237f
-                    binding.etWeight.setText(String.format(Locale.US, "%.2f", lbValue))
+                    binding.etWeight.setText(String.format(Locale.US, "%.2f", value))
                 }
             } else {
                 if (!binding.etWeightKg.isFocused) {
-                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", kg))
+                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", value))
                 }
             }
         }
@@ -192,15 +191,14 @@ class DataInputFragment : Fragment() {
             }
             updateWeightInputConfig(unit)
             updateToggleUI(binding.toggleWeight, checkId)
-            val currentKg = viewModel.weight.value ?: 0f
+            val currentWeight = viewModel.weight.value ?: 0f
             if (unit == "lb") {
-                val lbValue = currentKg / 0.45359237f
-                if (currentKg > 0) {
-                    binding.etWeight.setText(String.format(Locale.US, "%.2f", lbValue))
+                if (currentWeight > 0) {
+                    binding.etWeight.setText(String.format(Locale.US, "%.2f", currentWeight))
                 }
             } else {
-                if (currentKg > 0) {
-                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", currentKg))
+                if (currentWeight > 0) {
+                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", currentWeight))
                 }
             }
         }
@@ -231,7 +229,7 @@ class DataInputFragment : Fragment() {
             binding.etWeight.visibility = View.VISIBLE
             binding.etWeightKg.visibility = View.GONE
             binding.etWeight.setupValidation("lb", 2f, 551f, 2, false, 6) {
-                viewModel.setWeight(it * 0.45359237f)
+                viewModel.setWeight(it)
             }
         } else {
             binding.etWeight.visibility = View.GONE
@@ -421,7 +419,11 @@ class DataInputFragment : Fragment() {
 
             viewModel.saveDraft(requireContext())
 
-            val weightKg = viewModel.weight.value ?: 0f
+            val weightKg = if (viewModel.weightUnit.value == "lb") {
+                (viewModel.weight.value ?: 0f) * 0.45359237f
+            } else {
+                viewModel.weight.value ?: 0f
+            }
             val heightCm = viewModel.height.value ?: 0f
 
             if (weightKg <= 0) {
@@ -442,7 +444,7 @@ class DataInputFragment : Fragment() {
             val age = viewModel.selectedAge.value ?: 25
             
             val weightUnit = viewModel.weightUnit.value ?: "lb"
-            val weightValue = if (weightUnit == "lb") weightKg / 0.45359237f else weightKg
+            val weightValue = viewModel.weight.value ?: 0f
             
             val heightUnit = viewModel.heightUnit.value ?: "ft+in"
             val heightM = heightCm / 100f
@@ -459,21 +461,20 @@ class DataInputFragment : Fragment() {
             }
 
             val bmi = weightKg / (heightM * heightM)
-            Log.d("DataInputFragment","BMI: $bmi")
-            val intent = Intent(requireContext(), BmiResultActivity::class.java).apply {
-                putExtra("EXTRA_BMI", bmi)
-                putExtra("EXTRA_GENDER", if (isMale) 0 else 1)
-                putExtra("EXTRA_AGE", age)
-                putExtra("EXTRA_HEIGHT_M", heightM)
-                putExtra("EXTRA_DATE", viewModel.selectedDate.value)
-                putExtra("EXTRA_TIME", viewModel.selectedTime.value)
-                putExtra("EXTRA_WEIGHT_VAL", weightValue)
-                putExtra("EXTRA_WEIGHT_UNIT", weightUnit)
-                putExtra("EXTRA_HEIGHT_VAL1", hVal1)
-                putExtra("EXTRA_HEIGHT_VAL2", hVal2)
-                putExtra("EXTRA_HEIGHT_UNIT", heightUnit)
-            }
-            startActivity(intent)
+            BmiResultActivity.start(
+                requireContext(),
+                bmi = bmi,
+                gender = if (isMale) 0 else 1,
+                age = age,
+                heightM = heightM,
+                date = viewModel.selectedDate.value,
+                time = viewModel.selectedTime.value,
+                weightVal = weightValue,
+                weightUnit = weightUnit,
+                hVal1 = hVal1,
+                hVal2 = hVal2,
+                hUnit = heightUnit
+            )
         }
     }
 

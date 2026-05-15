@@ -32,7 +32,6 @@ class HistoryAdapter : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
         holder.bind(record)
         holder.itemView.setOnClickListener {
             val context = it.context
-            val intent = Intent(context, BmiResultActivity::class.java)
             
             val heightM = if (record.heightUnit == "cm") {
                 (record.heightCm ?: 0f) / 100f
@@ -41,31 +40,22 @@ class HistoryAdapter : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
                 totalInches * 0.0254f
             }
 
-            val weightKg = if (record.weightUnit == "lb") {
-                record.weight * 0.45359237f
-            } else {
-                record.weight
-            }
-
-            val bmi = if (heightM > 0) weightKg / (heightM * heightM) else 0f
-
-            val bundle = Bundle().apply {
-                putFloat("EXTRA_BMI", bmi)
-                putInt("EXTRA_GENDER", if (record.gender == "Male") 0 else 1)
-                putInt("EXTRA_AGE", record.age)
-                putFloat("EXTRA_HEIGHT_M", heightM)
-                putFloat("EXTRA_WEIGHT_VAL", record.weight)
-                putString("EXTRA_WEIGHT_UNIT", record.weightUnit)
-                putFloat("EXTRA_HEIGHT_VAL1", if (record.heightUnit == "cm") record.heightCm ?: 0f else (record.heightFt ?: 0).toFloat())
-                putInt("EXTRA_HEIGHT_VAL2", record.heightIn ?: 0)
-                putString("EXTRA_HEIGHT_UNIT", record.heightUnit)
-                putString("EXTRA_DATE", record.date)
-                putString("EXTRA_TIME", record.timeOfDay)
-                putBoolean("history_bmi", true)
-                putLong("EXTRA_RECORD_ID", record.id)
-            }
-            intent.putExtras(bundle)
-            context.startActivity(intent)
+            BmiResultActivity.start(
+                context = context,
+                bmi = record.bmi,
+                gender = if (record.gender == "Male") 0 else 1,
+                age = record.age,
+                heightM = heightM,
+                date = record.date,
+                time = record.timeOfDay,
+                weightVal = record.weight,
+                weightUnit = record.weightUnit,
+                hVal1 = if (record.heightUnit == "cm") record.heightCm ?: 0f else (record.heightFt ?: 0).toFloat(),
+                hVal2 = record.heightIn ?: 0,
+                hUnit = record.heightUnit,
+                isHistory = true,
+                recordId = record.id
+            )
         }
     }
 
@@ -73,20 +63,7 @@ class HistoryAdapter : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
 
     inner class ViewHolder(private val binding: ItemHistoryRecordBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(record: BmiRecord) {
-            val heightM = if (record.heightUnit == "cm") {
-                (record.heightCm ?: 0f) / 100f
-            } else {
-                val totalInches = (record.heightFt ?: 0) * 12 + (record.heightIn ?: 0)
-                totalInches * 0.0254f
-            }
-
-            val weightKg = if (record.weightUnit == "lb") {
-                record.weight * 0.45359237f
-            } else {
-                record.weight
-            }
-
-            val bmi = if (heightM > 0) weightKg / (heightM * heightM) else 0f
+            val bmi = record.bmi
             binding.tvBMI.text = String.format(Locale.US, "%.1f", bmi)
 
             val genderInt = if (record.gender == "Male") 0 else 1

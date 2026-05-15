@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_bmi_result"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#FFFFFF">
+
+    <bmicalculator.bmi.calculator.weightlosstracker.util.ImmersiveView
+        android:id="@+id/immersiveView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layoutToolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/immersiveView">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/ActionBar1"
@@ -39,7 +47,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/ActionBar2"
             android:layout_width="match_parent"
-            android:visibility="gone"
+            android:visibility="visible"
             android:layout_height="match_parent">
             <TextView
                 android:id="@+id/tvBMI"
@@ -50,12 +58,10 @@
                 android:text="@string/bmi"
                 android:fontFamily="@font/montserrat_extrabold"
                 android:textSize="24sp"
-
                 android:gravity="center"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                />
+                app:layout_constraintStart_toStartOf="parent" />
             <TextView
                 android:id="@+id/tvToolbarDate"
                 android:layout_width="wrap_content"
@@ -74,6 +80,10 @@
                 android:layout_height="wrap_content"
                 android:text="@string/recent"
                 android:textColor="#3659CF"
+                android:paddingStart="12dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="10dp"
                 android:textSize="16sp"
                 android:fontFamily="@font/montserrat_regular"
                 android:gravity="center"
@@ -85,7 +95,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/ActionBar3"
-            android:visibility="visible"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <ImageView
@@ -110,22 +120,22 @@
                 android:fontFamily="@font/montserrat_regular"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                />
+                app:layout_constraintEnd_toEndOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 可滚动内容区域，占据剩余所有空间 -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/layoutToolbar"
+        app:layout_constraintBottom_toTopOf="@id/tvSave">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutScrollContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="20dp">
@@ -181,11 +191,9 @@
                 android:includeFontPadding="false"
                 android:gravity="center"
                 android:layout_marginTop="5dp"
-
                 android:drawableEnd="@drawable/help_circle"
                 android:drawablePadding="4.5dp"
                 android:drawableTint="#FFFFFF"
-
                 app:layout_constraintTop_toBottomOf="@id/tvBmiValue"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
@@ -243,12 +251,9 @@
                 android:layout_width="0dp"
                 android:layout_height="0.5dp"
                 android:layout_marginTop="30dp"
-
                 android:layout_marginStart="22.5dp"
                 android:layout_marginEnd="22.5dp"
-
                 android:background="#000000"
-
                 android:alpha="0.2"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -267,8 +272,7 @@
                 app:layout_constraintStart_toStartOf="@+id/DivideLine"
                 app:layout_constraintEnd_toEndOf="@id/DivideLine"
                 app:layout_constraintTop_toTopOf="@id/DivideLine"
-                app:layout_constraintBottom_toBottomOf="@id/DivideLine"
-                />
+                app:layout_constraintBottom_toBottomOf="@id/DivideLine" />
 
             <TextView
                 android:id="@+id/tvNeedApp"
@@ -295,8 +299,6 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:layout_constraintStart_toStartOf="@+id/tvNeedApp"
                 app:layout_constraintTop_toBottomOf="@+id/tvNeedApp"/>
-
-
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
@@ -315,6 +317,17 @@
         android:fontFamily="@font/montserrat_extrabold"
         android:background="@drawable/bg_save_rounded"
         android:textSize="20sp"
-        android:textColor="#FFFFFF" />
+        android:textColor="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-</LinearLayout>
+    <!-- 全局点击覆盖层 -->
+    <View
+        android:id="@+id/tabClickOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
