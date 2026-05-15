@@ -32,6 +32,7 @@ import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MainActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.BmiRangeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.RecommendAppAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.BmiResultViewModel
+import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.DataInputViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.util.CustomTypefaceSpan
 import java.util.*
@@ -52,6 +53,10 @@ class BmiResultFragment : Fragment() {
         MainViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
     }
 
+    private val dataInputViewModel: DataInputViewModel by activityViewModels {
+        DataInputViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
+    }
+
     private val regularTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_regular) }
     private val extraBoldTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_extrabold) }
     private val colorBlack = Color.BLACK
@@ -65,17 +70,11 @@ class BmiResultFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        /*ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            if (binding.layoutToolbar.isVisible) {
-                binding.layoutToolbar.updatePadding(top = systemBars.top)
-                v.updatePadding(top = 0)
-            } else {
-                v.updatePadding(top = systemBars.top)
-            }
-            insets
-        }*/
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+        val args = arguments
+        val isStandalone = args?.containsKey(BmiResultActivity.EXTRA_BMI) == true
+        val isHistory = args?.getBoolean(BmiResultActivity.EXTRA_HISTORY_BMI, false) ?: false
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(isStandalone && !isHistory) {
             override fun handleOnBackPressed() {
                 showDeleteConfirmDialog()
             }
@@ -429,7 +428,10 @@ class BmiResultFragment : Fragment() {
                     // 还有记录，正常回到上一级页面（如历史记录列表）
                     requireActivity().finish()
                 } else {
-                    // 最后一条记录被删除，进入初始输入页面 (DataInputActivity，填满屏幕)
+                    // 最后一条记录被删除，清除草稿并进入初始输入页面 (DataInputActivity，填满屏幕)
+                    requireContext().getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
+                        .edit().clear().apply()
+
                     startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     })
@@ -451,6 +453,7 @@ class BmiResultFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // Removed unnecessary redundant call to loadData since we are now observing latestRecord
+        dataInputViewModel.loadLatestRecord(requireContext())
     }
 
     override fun onPause() {

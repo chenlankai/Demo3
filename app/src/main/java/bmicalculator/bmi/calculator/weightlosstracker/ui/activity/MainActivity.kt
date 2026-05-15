@@ -36,6 +36,7 @@ class MainActivity : BaseActivity() {
         val adapter = MainPagerAdapter(this)
         viewPager.adapter = adapter
         viewPager.isUserInputEnabled = false
+        viewPager.offscreenPageLimit = 3
 
         val bmiDao = AppDatabase.getDatabase(this).bmiDao()
         val viewModel = ViewModelProvider(this, MainViewModel.Factory(bmiDao))[MainViewModel::class.java]

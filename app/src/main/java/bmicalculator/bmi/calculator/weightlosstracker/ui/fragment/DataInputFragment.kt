@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
@@ -47,7 +48,7 @@ class DataInputFragment : Fragment() {
     private var _binding: FragmentDataInputBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: DataInputViewModel by viewModels {
+    private val viewModel: DataInputViewModel by activityViewModels {
         DataInputViewModel.Factory(AppDatabase.getDatabase(requireContext()).bmiDao())
     }
 

@@ -145,44 +145,42 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     }
 
     fun loadLatestRecord(context: Context) {
-        viewModelScope.launch {
-            val record = bmiDao.getLatestRecord()
-            val prefs = context.getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
-            
-            _latestRecord.value = record
+        val prefs = context.getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
 
-            if (record == null) {
-                // 数据库为空：重置交互状态
-                _isWeightInteracted.value = false
-                _isHeightInteracted.value = false
-                
-                // 恢复默认值
-                val currentWUnit = _weightUnit.value ?: "lb"
-                _weight.value = if (currentWUnit == "lb") 140f else 65f
-                
-                val currentHUnit = _heightUnit.value ?: "ft+in"
-                _height.value = if (currentHUnit == "cm") 170f else 170.18f
-            } else {
-                // 数据库有数据：视为已编辑/已交互过
-                _isWeightInteracted.value = true
-                _isHeightInteracted.value = true
+        // ✨ 核心优化：在进入协程前，先在主线程把草稿同步刷给 UI！
+        if (prefs.contains("is_male")) {
+            _isMale.value = prefs.getBoolean("is_male", true)
+            _selectedAge.value = prefs.getInt("age", 25)
+            _weight.value = prefs.getFloat("weight", 140f) // 瞬间变成草稿值，UI绘制时绝不会显示140默认值
+            _height.value = prefs.getFloat("height", 170.18f)
+            _weightUnit.value = prefs.getString("weight_unit", "lb")
+            _heightUnit.value = prefs.getString("height_unit", "ft+in")
 
-                if (prefs.contains("is_male")) {
-                    _isMale.value = prefs.getBoolean("is_male", true)
-                    _selectedAge.value = prefs.getInt("age", 25)
-                    _weight.value = prefs.getFloat("weight", 140f)
-                    _height.value = prefs.getFloat("height", 170.18f)
-                    _weightUnit.value = prefs.getString("weight_unit", "lb")
-                    _heightUnit.value = prefs.getString("height_unit", "ft+in")
-                    _isWeightInteracted.value = prefs.getBoolean("weight_interacted", true)
-                    _isHeightInteracted.value = prefs.getBoolean("height_interacted", true)
+            // 至于数据库的记录，让它继续在后台默默查，查完只更新内部标志，不影响大局
+            viewModelScope.launch {
+                val record = bmiDao.getLatestRecord()
+                if (record != null) {
+                    _isWeightInteracted.value = true
+                    _isHeightInteracted.value = true
                 } else {
+                    _isWeightInteracted.value = prefs.getBoolean("weight_interacted", false)
+                    _isHeightInteracted.value = prefs.getBoolean("height_interacted", false)
+                }
+                _latestRecord.value = record
+            }
+        } else {
+            // ✨ 如果没有草稿，再老老实实走后台协程去查数据库或用默认值
+            viewModelScope.launch {
+                val record = bmiDao.getLatestRecord()
+                _latestRecord.value = record
+                if (record != null) {
+                    _isWeightInteracted.value = true
+                    _isHeightInteracted.value = true
                     _isMale.value = record.gender == "Male"
                     _selectedAge.value = record.age
                     _weightUnit.value = record.weightUnit
                     _heightUnit.value = record.heightUnit
                     _weight.value = record.weight
-
                     if (record.heightUnit == "cm") {
                         _height.value = record.heightCm ?: 170.18f
                     } else {
@@ -190,6 +188,14 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
                         val inch = record.heightIn ?: 7
                         _height.value = ((ft * 12) + inch) * 2.54f
                     }
+                } else {
+                    // 彻底无数据，用默认值
+                    _isWeightInteracted.value = false
+                    _isHeightInteracted.value = false
+                    val currentWUnit = _weightUnit.value ?: "lb"
+                    _weight.value = if (currentWUnit == "lb") 140f else 65f
+                    val currentHUnit = _heightUnit.value ?: "ft+in"
+                    _height.value = if (currentHUnit == "cm") 170f else 170.18f
                 }
             }
         }
