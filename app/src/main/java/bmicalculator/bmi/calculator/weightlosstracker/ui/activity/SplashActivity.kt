@@ -111,12 +111,14 @@ class SplashActivity : BaseActivity() {
     private fun navigateToNextScreen() {
         lifecycleScope.launch {
             val records = AppDatabase.getDatabase(this@SplashActivity).bmiDao().getAllRecords().first()
-            val targetActivity = if (records.isEmpty()) {
-                DataInputActivity::class.java
+            val intent = if (records.isEmpty()) {
+                Intent(this@SplashActivity, DataInputActivity::class.java)
             } else {
-                MainActivity::class.java
+                Intent(this@SplashActivity, MainActivity::class.java).apply {
+                    putExtra("SELECT_TAB", 1)
+                }
             }
-            startActivity(Intent(this@SplashActivity, targetActivity))
+            startActivity(intent)
             finish()
         }
     }

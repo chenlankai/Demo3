@@ -125,7 +125,10 @@ class DataInputFragment : Fragment() {
         setupGenderSelection()
         setupListeners()
         observeViewModel()
-        
+    }
+
+    override fun onResume() {
+        super.onResume()
         viewModel.loadLatestRecord(requireContext())
     }
 
@@ -149,11 +152,17 @@ class DataInputFragment : Fragment() {
             val unit = viewModel.weightUnit.value ?: "lb"
             if (unit == "lb") {
                 if (!binding.etWeight.isFocused) {
-                    binding.etWeight.setText(String.format(Locale.US, "%.2f", value))
+                    val formatted = String.format(Locale.US, "%.2f", value)
+                    if (binding.etWeight.text.toString() != formatted) {
+                        binding.etWeight.setText(formatted)
+                    }
                 }
             } else {
                 if (!binding.etWeightKg.isFocused) {
-                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", value))
+                    val formatted = String.format(Locale.US, "%.2f", value)
+                    if (binding.etWeightKg.text.toString() != formatted) {
+                        binding.etWeightKg.setText(formatted)
+                    }
                 }
             }
         }
@@ -191,15 +200,14 @@ class DataInputFragment : Fragment() {
             }
             updateWeightInputConfig(unit)
             updateToggleUI(binding.toggleWeight, checkId)
+            
+            // 当单位切换时，强制更新 EditText 里的值
             val currentWeight = viewModel.weight.value ?: 0f
+            val formatted = String.format(Locale.US, "%.2f", currentWeight)
             if (unit == "lb") {
-                if (currentWeight > 0) {
-                    binding.etWeight.setText(String.format(Locale.US, "%.2f", currentWeight))
-                }
+                binding.etWeight.setText(formatted)
             } else {
-                if (currentWeight > 0) {
-                    binding.etWeightKg.setText(String.format(Locale.US, "%.2f", currentWeight))
-                }
+                binding.etWeightKg.setText(formatted)
             }
         }
         
@@ -578,6 +586,13 @@ class DataInputFragment : Fragment() {
     ) {
         this.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
+                // 标记为已交互/已编辑
+                if (this.id == binding.etWeight.id || this.id == binding.etWeightKg.id) {
+                    viewModel.markWeightInteracted()
+                } else if (this.id == binding.etHeightCm.id || this.id == binding.etHeightFt.id || this.id == binding.etHeightIn.id) {
+                    viewModel.markHeightInteracted()
+                }
+
                 if (showUnitDuringEdit) {
                     val currentText = text.toString()
                     val numeric = currentText.filter { it.isDigit() || it == '.' }.let {

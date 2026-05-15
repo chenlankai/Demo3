@@ -48,18 +48,12 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
 
     init {
         val calendar = Calendar.getInstance()
-
-        // 1. 设置日期
         val monthStr = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")[calendar.get(Calendar.MONTH)]
         val day = calendar.get(Calendar.DAY_OF_MONTH)
         val year = calendar.get(Calendar.YEAR)
         _selectedDate.value = "$monthStr $day, $year"
-        _weightUnit.value = "lb"
-        _weight.value = 140f
 
-
-        val currentHour = calendar.get(Calendar.HOUR_OF_DAY) // 获取当前 24 小时制的小时
-
+        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
         _selectedTime.value = when (currentHour) {
             in 8..13 -> "Morning"
             in 14..18 -> "Afternoon"
@@ -86,26 +80,45 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
         _isHeightInteracted.value = true
     }
 
+    fun markWeightInteracted() {
+        _isWeightInteracted.value = true
+    }
+
+    fun markHeightInteracted() {
+        _isHeightInteracted.value = true
+    }
+
     fun setWeightUnit(unit: String) {
-        if (_isWeightInteracted.value != true) {
-            if (unit == "lb") {
-                _weight.value = 140f
+        val oldUnit = _weightUnit.value
+        if (oldUnit != unit) {
+            if (_isWeightInteracted.value == true) {
+                val currentWeight = _weight.value ?: 0f
+                if (currentWeight > 0f) {
+                    if (unit == "lb" && oldUnit == "kg") {
+                        _weight.value = currentWeight * 2.20462f
+                    } else if (unit == "kg" && oldUnit == "lb") {
+                        _weight.value = currentWeight * 0.453592f
+                    }
+                }
             } else {
-                _weight.value = 65.0f
+                _weight.value = if (unit == "lb") 140f else 65f
             }
+            _weightUnit.value = unit
         }
-        _weightUnit.value = unit
     }
 
     fun setHeightUnit(unit: String) {
-        if (_isHeightInteracted.value != true) {
-            if (unit == "cm") {
-                _height.value = 170.0f // 默认 170.0 cm
-            } else {
-                _height.value = 170.18f // 对应 5'7" (67 inches * 2.54)
+        val oldUnit = _heightUnit.value
+        if (oldUnit != unit) {
+            if (_isHeightInteracted.value != true) {
+                if (unit == "cm") {
+                    _height.value = 170.0f
+                } else {
+                    _height.value = 170.18f
+                }
             }
+            _heightUnit.value = unit
         }
-        _heightUnit.value = unit
     }
 
     fun setDate(date: String) {
@@ -133,44 +146,51 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
 
     fun loadLatestRecord(context: Context) {
         viewModelScope.launch {
+            val record = bmiDao.getLatestRecord()
             val prefs = context.getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
+            
+            _latestRecord.value = record
 
-            // 优先级 1: 检查是否有上次修改的草稿
-            if (prefs.contains("is_male")) {
-                _isMale.value = prefs.getBoolean("is_male", true)
-                _selectedAge.value = prefs.getInt("age", 25)
-                _weight.value = prefs.getFloat("weight", 140f)
-                _height.value = prefs.getFloat("height", 170.18f)
-                _weightUnit.value = prefs.getString("weight_unit", "lb")
-                _heightUnit.value = prefs.getString("height_unit", "ft+in")
-                _isWeightInteracted.value = prefs.getBoolean("weight_interacted", false)
-                _isHeightInteracted.value = prefs.getBoolean("height_interacted", false)
-
-                // 同时也要获取最新记录供其他逻辑使用，但不覆盖当前 UI 状态
-                _latestRecord.value = bmiDao.getLatestRecord()
+            if (record == null) {
+                // 数据库为空：重置交互状态
+                _isWeightInteracted.value = false
+                _isHeightInteracted.value = false
+                
+                // 恢复默认值
+                val currentWUnit = _weightUnit.value ?: "lb"
+                _weight.value = if (currentWUnit == "lb") 140f else 65f
+                
+                val currentHUnit = _heightUnit.value ?: "ft+in"
+                _height.value = if (currentHUnit == "cm") 170f else 170.18f
             } else {
-                // 优先级 2: 如果没有草稿，加载数据库最新记录
-                val record = bmiDao.getLatestRecord()
-                _latestRecord.value = record
-                record?.let {
-                    _isMale.value = it.gender == "Male"
-                    _selectedAge.value = it.age
-                    _weightUnit.value = it.weightUnit
-                    _heightUnit.value = it.heightUnit
-                    _weight.value = it.weight
+                // 数据库有数据：视为已编辑/已交互过
+                _isWeightInteracted.value = true
+                _isHeightInteracted.value = true
 
-                    if (it.heightUnit == "cm") {
-                        _height.value = it.heightCm ?: 170.18f
+                if (prefs.contains("is_male")) {
+                    _isMale.value = prefs.getBoolean("is_male", true)
+                    _selectedAge.value = prefs.getInt("age", 25)
+                    _weight.value = prefs.getFloat("weight", 140f)
+                    _height.value = prefs.getFloat("height", 170.18f)
+                    _weightUnit.value = prefs.getString("weight_unit", "lb")
+                    _heightUnit.value = prefs.getString("height_unit", "ft+in")
+                    _isWeightInteracted.value = prefs.getBoolean("weight_interacted", true)
+                    _isHeightInteracted.value = prefs.getBoolean("height_interacted", true)
+                } else {
+                    _isMale.value = record.gender == "Male"
+                    _selectedAge.value = record.age
+                    _weightUnit.value = record.weightUnit
+                    _heightUnit.value = record.heightUnit
+                    _weight.value = record.weight
+
+                    if (record.heightUnit == "cm") {
+                        _height.value = record.heightCm ?: 170.18f
                     } else {
-                        val ft = it.heightFt ?: 5
-                        val inch = it.heightIn ?: 7
+                        val ft = record.heightFt ?: 5
+                        val inch = record.heightIn ?: 7
                         _height.value = ((ft * 12) + inch) * 2.54f
                     }
-                    
-                    _isWeightInteracted.value = true
-                    _isHeightInteracted.value = true
                 }
-                // 优先级 3: 如果连数据库记录都没有，则保留 ViewModel 初始化的默认值
             }
         }
     }
