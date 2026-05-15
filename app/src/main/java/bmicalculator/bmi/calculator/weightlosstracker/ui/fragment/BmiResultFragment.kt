@@ -33,6 +33,7 @@ import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.BmiResultView
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.util.CustomTypefaceSpan
 import java.util.*
+import androidx.activity.OnBackPressedCallback
 
 class BmiResultFragment : Fragment() {
 
@@ -68,6 +69,11 @@ class BmiResultFragment : Fragment() {
             }
             insets
         }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                showDeleteConfirmDialog()
+            }
+        })
 
         val hideDescription = arguments?.getBoolean("hide_description", false) ?: false
         binding.tvDescription.isVisible = !hideDescription

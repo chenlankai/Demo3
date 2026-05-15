@@ -100,12 +100,26 @@ class MeActivity : BaseActivity() {
         dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
 
         dialogBinding.btnLog.setOnClickListener {
-            if (!isLoggedIn) {
-                //
+            isLoggedIn = !isLoggedIn
+            binding.ivAvatar.isVisible = isLoggedIn
+
+            val statusMessage: String
+            val iconRes: Int
+            val colorStr: String
+
+            if (isLoggedIn) {
+                statusMessage = "Logged in successfully"
+                iconRes = R.drawable.login
+                colorStr = "#4CAF50"
             } else {
-                isLoggedIn = false
-                updateLoginStateUI(dialog, dialogBinding)
+                statusMessage = "Logged out successfully"
+                iconRes = R.drawable.logout
+                colorStr = "#2196F3"
             }
+
+            showStatusToast(statusMessage, iconRes, colorStr)
+
+            dialog.dismiss()
         }
 
         dialog.behavior.isDraggable = false

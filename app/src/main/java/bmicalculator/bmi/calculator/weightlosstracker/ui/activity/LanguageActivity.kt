@@ -2,6 +2,7 @@ package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.ViewGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,7 +19,8 @@ import kotlinx.coroutines.launch
 class LanguageActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLanguageBinding
-    private val languages = listOf(
+    /*private val languages = listOf(
+
         "English" to "en",
         "Chinese" to "zh",
         "Spanish" to "es",
@@ -37,6 +39,30 @@ class LanguageActivity : BaseActivity() {
         "Dutch" to "nl",
         "Indonesian" to "in",
         "Persian" to "fa"
+    )*/
+    private val languages = listOf(
+        "English" to "en",
+        "Português" to "pt",
+        "Русский" to "ru",
+        "Português" to "pt",
+        "Deutsch" to "de",
+        "繁體中文" to "zh-TW",
+        "简体中文" to "zh-CN",
+        "Français" to "fr",
+        "Español" to "es",
+        "Italiano" to "it",
+        "한국어" to "ko",
+        /*"English" to "en",
+        "Português" to "pt",
+        "Русский" to "ru",
+        "Português" to "pt",
+        "Deutsch" to "de",
+        "繁體中文" to "zh-TW",
+        "简体中文" to "zh-CN",
+        "Français" to "fr",
+        "Español" to "es",
+        "Italiano" to "it",
+        "한국어" to "ko"*/
     )
     private var currentLangCode = "en"
 
@@ -52,6 +78,14 @@ class LanguageActivity : BaseActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.layoutToolbar) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = systemBars.top)
+            insets
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.endLayout) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = v.layoutParams as ViewGroup.MarginLayoutParams
+            params.bottomMargin = systemBars.bottom + (15 * resources.displayMetrics.density).toInt()
+            v.layoutParams = params
+
             insets
         }
 

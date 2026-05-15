@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -54,10 +55,10 @@ class DataInputFragment : Fragment() {
     private val timeKeys = listOf("Morning", "Afternoon", "Evening", "Night")
     private val timeLabels by lazy {
         listOf(
-            getString(R.string.morning),
-            getString(R.string.afternoon),
-            getString(R.string.evening),
-            getString(R.string.night)
+            getString(R.string.morning), // 8-13.59
+            getString(R.string.afternoon), // 14-18.59
+            getString(R.string.evening), //19-22.59
+            getString(R.string.night) // 23-7.59
         )
     }
 
@@ -458,6 +459,7 @@ class DataInputFragment : Fragment() {
             }
 
             val bmi = weightKg / (heightM * heightM)
+            Log.d("DataInputFragment","BMI: $bmi")
             val intent = Intent(requireContext(), BmiResultActivity::class.java).apply {
                 putExtra("EXTRA_BMI", bmi)
                 putExtra("EXTRA_GENDER", if (isMale) 0 else 1)

@@ -44,6 +44,7 @@ class MainActivity : BaseActivity() {
         val selectTab = intent.getIntExtra("SELECT_TAB", 0)
         viewPager.setCurrentItem(selectTab, false)
 
+
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             when (position) {
                 0 -> {

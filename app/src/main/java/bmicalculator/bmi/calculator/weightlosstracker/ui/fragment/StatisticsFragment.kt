@@ -314,29 +314,50 @@ class StatisticsFragment : Fragment() {
                     }
                 }
             }
-            else -> { // Day 模式
+            else -> { // 优化后的 Day 模式
                 val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+                // 修正：将起点直接设为当月 1 号 0 点（代表图表 X 轴的 0 坐标）
                 val startCal = (cal.clone() as Calendar).apply {
                     set(Calendar.DAY_OF_MONTH, 1)
                     set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-                    add(Calendar.DAY_OF_MONTH, -1)
                 }
                 val monthName = SimpleDateFormat("MMMM", Locale.getDefault()).format(cal.time)
 
-                for (i in 0..daysInMonth) {
+                // 生成 X 轴标签：从 0 到 daysInMonth - 1 (对应 1号 到 31号)
+                for (i in 0 until daysInMonth) {
                     val currentDay = (startCal.clone() as Calendar).apply { add(Calendar.DAY_OF_MONTH, i) }
                     labels.add(SimpleDateFormat("d", Locale.getDefault()).format(currentDay.time))
-                    titleInfoList.add(if (i == 1) monthName else "")
+                    titleInfoList.add(if (i == 0) monthName else "") // 在 1 号（索引0）顶端显示月份
                 }
-
-                allRecords.groupBy { record ->
-                    val rDate = parseDate(record.date)
-                    if (rDate != null) ((rDate.time - startCal.timeInMillis) / (24 * 3600 * 1000)).toInt() else -1
-                }.forEach { (diff, dayRecords) ->
-                    if (diff in 0..daysInMonth) {
-                        entries.add(Entry(diff.toFloat(), calculateVal(dayRecords.last(), isBmi)))
+                val timeWeight = mapOf(
+                    "Morning" to 1,
+                    "Afternoon" to 2,
+                    "Evening" to 3,
+                    "Night" to 4
+                )
+                allRecords
+                    .map { record ->
+                        val rDate = parseDate(record.date)
+                        val diff = if (rDate != null) {
+                            ((rDate.time - startCal.timeInMillis) / (24 * 3600 * 1000)).toInt()
+                        } else -1
+                        // 将记录和它在图表中的 X 轴坐标组合在一起
+                        Pair(diff, record)
                     }
-                }
+                    // 只保留属于当前月份的记录
+                    .filter { (diff, _) -> diff in 0 until daysInMonth }
+                    // 核心排序：1. 依据相差天数升序 2. 依据时段权重升序 3. 依据自增 id 升序
+                    .sortedWith(compareBy<Pair<Int, BmiRecord>> { it.first }
+                        .thenBy { timeWeight[it.second.timeOfDay] ?: 0 }
+                        .thenBy { it.second.id })
+                    // 依照天数(diff)分组，这样每组里最后一个就是当天的“最终记录”
+                    .groupBy { it.first }
+                    .forEach { (diff, dayPairs) ->
+                        // 拿到符合你要求（最迟时段、最新id）的最后一条数据
+                        val finalRecord = dayPairs.last().second
+                        entries.add(Entry(diff.toFloat(), calculateVal(finalRecord, isBmi)))
+                    }
             }
         }
         return ChartData(entries, labels, titleInfoList)

@@ -19,10 +19,10 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     private val _selectedAge = MutableLiveData(25)
     val selectedAge: LiveData<Int> get() = _selectedAge
 
-    private val _weight = MutableLiveData(63.5029318f) // Default 140 lb
+    private val _weight = MutableLiveData(140f) // Default 140 lb
     val weight: LiveData<Float> get() = _weight
 
-    private val _height = MutableLiveData(170.0f)
+    private val _height = MutableLiveData(170.18f) // Default 5ft 7 in
     val height: LiveData<Float> get() = _height
 
     private val _weightUnit = MutableLiveData("lb")
@@ -47,13 +47,22 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     val latestRecord: LiveData<BmiRecord?> get() = _latestRecord
 
     init {
-
         val calendar = Calendar.getInstance()
+
+        // 1. 设置日期
         val monthStr = listOf("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec")[calendar.get(Calendar.MONTH)]
         val day = calendar.get(Calendar.DAY_OF_MONTH)
         val year = calendar.get(Calendar.YEAR)
         _selectedDate.value = "$monthStr $day, $year"
-        _selectedTime.value = "Afternoon"
+
+        val currentHour = calendar.get(Calendar.HOUR_OF_DAY) // 获取当前 24 小时制的小时
+
+        _selectedTime.value = when (currentHour) {
+            in 8..13 -> "Morning"
+            in 14..18 -> "Afternoon"
+            in 19..22 -> "Evening"
+            else -> "Night"
+        }
     }
 
     fun setGender(isMale: Boolean) {
@@ -109,8 +118,8 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
         prefs.edit().apply {
             putBoolean("is_male", _isMale.value ?: true)
             putInt("age", _selectedAge.value ?: 25)
-            putFloat("weight_kg", _weight.value ?: 63.5f)
-            putFloat("height_cm", _height.value ?: 170f)
+            putFloat("weight", _weight.value ?: 140.0f)
+            putFloat("height", _height.value ?: 170.18f)
             putString("weight_unit", _weightUnit.value ?: "lb")
             putString("height_unit", _heightUnit.value ?: "ft+in")
             putBoolean("weight_interacted", _isWeightInteracted.value ?: false)
@@ -122,18 +131,18 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
     fun loadLatestRecord(context: Context) {
         viewModelScope.launch {
             val prefs = context.getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
-            
+
             // 优先级 1: 检查是否有上次修改的草稿
             if (prefs.contains("is_male")) {
                 _isMale.value = prefs.getBoolean("is_male", true)
                 _selectedAge.value = prefs.getInt("age", 25)
-                _weight.value = prefs.getFloat("weight_kg", 63.5f)
-                _height.value = prefs.getFloat("height_cm", 170f)
+                _weight.value = prefs.getFloat("weight", 140f)
+                _height.value = prefs.getFloat("height", 170.18f)
                 _weightUnit.value = prefs.getString("weight_unit", "lb")
                 _heightUnit.value = prefs.getString("height_unit", "ft+in")
                 _isWeightInteracted.value = prefs.getBoolean("weight_interacted", false)
                 _isHeightInteracted.value = prefs.getBoolean("height_interacted", false)
-                
+
                 // 同时也要获取最新记录供其他逻辑使用，但不覆盖当前 UI 状态
                 _latestRecord.value = bmiDao.getLatestRecord()
             } else {
@@ -145,7 +154,7 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
                     _selectedAge.value = it.age
                     _weightUnit.value = it.weightUnit
                     _heightUnit.value = it.heightUnit
-                    
+
                     if (it.weightUnit == "lb") {
                         _weight.value = it.weight * 0.45359237f
                     } else {
@@ -153,7 +162,7 @@ class DataInputViewModel(private val bmiDao: BmiDao) : ViewModel() {
                     }
 
                     if (it.heightUnit == "cm") {
-                        _height.value = it.heightCm ?: 170.0f
+                        _height.value = it.heightCm ?: 170.18f
                     } else {
                         val ft = it.heightFt ?: 5
                         val inch = it.heightIn ?: 7
