@@ -233,24 +233,33 @@ class StatisticsFragment : Fragment() {
         chart.invalidate()
     }
 
-    private fun prepareDataByMode(isBmi: Boolean): ChartData {
+    private fun prepareDataByMode(
+        isBmi: Boolean,
+        dayCount: Int = 60,
+        weekCount: Int = 60,
+        monthCount: Int = 60
+    ): ChartData {
         val entries = mutableListOf<Entry>()
         val labels = mutableListOf<String>()
         val titleInfoList = mutableListOf<String>()
         if (allRecords.isEmpty()) return ChartData(entries, labels, titleInfoList)
 
         val cal = Calendar.getInstance()
-        cal.time = parseDate(allRecords.last().date) ?: Date()
+        // 以最后一条历史数据的时间作为基础基准点
+        val latestDataDate = parseDate(allRecords.last().date) ?: Date()
 
         when (currentMode) {
             getString(R.string.week), "Week" -> {
-                val weekCount = 30 // 想要显示的总周数
                 val labelSdf = SimpleDateFormat("d", Locale.getDefault())
                 val monthSdf = SimpleDateFormat("MMMM", Locale.getDefault())
 
-                // 锚点：本周周六
+                // 1. 【多显示未来 1 周】：先把锚点调整到最新数据那一周的周六
+                cal.time = latestDataDate
                 cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
                 cal.add(Calendar.DAY_OF_WEEK, 6)
+
+                // 2. 将锚点往未来只推 1 周，使其成为图表最右侧（最后一格）的终点
+                cal.add(Calendar.WEEK_OF_YEAR, 1)
                 cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59)
 
                 for (i in 0 until weekCount) {
@@ -262,9 +271,7 @@ class StatisticsFragment : Fragment() {
 
                     labels.add(labelSdf.format(weekStart.time))
 
-                    val currentMonth = weekStart.get(Calendar.MONTH)
                     val isFirstDayOfMonthInWeek = weekStart.get(Calendar.DAY_OF_MONTH) <= 7 && weekStart.get(Calendar.DAY_OF_MONTH) >= 1
-
                     if (isFirstDayOfMonthInWeek) {
                         titleInfoList.add(monthSdf.format(weekStart.time))
                     } else {
@@ -282,9 +289,12 @@ class StatisticsFragment : Fragment() {
                 }
             }
             getString(R.string.month), "Month" -> {
-                val monthCount = 36
                 val monthSdf = SimpleDateFormat("M", Locale.getDefault())
                 val yearSdf = SimpleDateFormat("yyyy", Locale.getDefault())
+
+                // 【多显示未来 1 个月】：将日历先设为最新数据那天，然后往未来推 1 个月作为右侧终点
+                cal.time = latestDataDate
+                cal.add(Calendar.MONTH, 1)
 
                 for (i in 0 until monthCount) {
                     val targetMonth = (cal.clone() as Calendar).apply {
@@ -295,7 +305,6 @@ class StatisticsFragment : Fragment() {
 
                     labels.add(monthSdf.format(targetMonth.time))
 
-                    // 逻辑：如果是 1 月，顶部显示年份
                     if (targetMonth.get(Calendar.MONTH) == Calendar.JANUARY) {
                         titleInfoList.add(yearSdf.format(targetMonth.time))
                     } else {
@@ -316,47 +325,54 @@ class StatisticsFragment : Fragment() {
                     }
                 }
             }
-            else -> { // 优化后的 Day 模式
-                val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+            else -> { // 【重写校准】：Day 模式同步增加未来 1 天，且保证“今天”和“昨天”绝对不丢
+                cal.time = latestDataDate
 
-                // 修正：将起点直接设为当月 1 号 0 点（代表图表 X 轴的 0 坐标）
+                // 修正数学平移公式：
+                // 整个图表总长度为 dayCount。要在右边空出【未来 1 天】（对应的 X 轴最大索引是 dayCount - 1）。
+                // 那么“今天（最新数据天）”的 X 轴索引必须是倒数第二格，即 (dayCount - 2)。
+                // 倒退推算：图表的零点起点（0坐标） = 最新数据天 往过去数 (dayCount - 2) 天，即 -(dayCount - 2)
                 val startCal = (cal.clone() as Calendar).apply {
-                    set(Calendar.DAY_OF_MONTH, 1)
+                    add(Calendar.DAY_OF_YEAR, -(dayCount - 2))
                     set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
                 }
-                val monthName = SimpleDateFormat("MMMM", Locale.getDefault()).format(cal.time)
 
-                // 生成 X 轴标签：从 0 到 daysInMonth - 1 (对应 1号 到 31号)
-                for (i in 0 until daysInMonth) {
+                val daySdf = SimpleDateFormat("d", Locale.getDefault())
+                val monthSdf = SimpleDateFormat("MMM", Locale.getDefault())
+                var lastMonthValue = -1
+
+                // 动态生成 X 轴标签（最后一格会是明天的日期，今天和昨天完美保留在前面）
+                for (i in 0 until dayCount) {
                     val currentDay = (startCal.clone() as Calendar).apply { add(Calendar.DAY_OF_MONTH, i) }
-                    labels.add(SimpleDateFormat("d", Locale.getDefault()).format(currentDay.time))
-                    titleInfoList.add(if (i == 0) monthName else "") // 在 1 号（索引0）顶端显示月份
+                    labels.add(daySdf.format(currentDay.time))
+
+                    val currentMonth = currentDay.get(Calendar.MONTH)
+                    if (i == 0 || currentMonth != lastMonthValue) {
+                        titleInfoList.add(monthSdf.format(currentDay.time))
+                        lastMonthValue = currentMonth
+                    } else {
+                        titleInfoList.add("")
+                    }
                 }
-                val timeWeight = mapOf(
-                    "Morning" to 1,
-                    "Afternoon" to 2,
-                    "Evening" to 3,
-                    "Night" to 4
-                )
+
+                val timeWeight = mapOf("Morning" to 1, "Afternoon" to 2, "Evening" to 3, "Night" to 4)
+
                 allRecords
                     .map { record ->
                         val rDate = parseDate(record.date)
                         val diff = if (rDate != null) {
+                            // 计算这笔记录相对于 X 轴 0 刻度的天数差
                             ((rDate.time - startCal.timeInMillis) / (24 * 3600 * 1000)).toInt()
                         } else -1
-                        // 将记录和它在图表中的 X 轴坐标组合在一起
                         Pair(diff, record)
                     }
-                    // 只保留属于当前月份的记录
-                    .filter { (diff, _) -> diff in 0 until daysInMonth }
-                    // 核心排序：1. 依据相差天数升序 2. 依据时段权重升序 3. 依据自增 id 升序
+                    // 只保留严格落在图表 [0 刻度 到 最后一格] 范围内的有效记录
+                    .filter { (diff, _) -> diff in 0 until dayCount }
                     .sortedWith(compareBy<Pair<Int, BmiRecord>> { it.first }
                         .thenBy { timeWeight[it.second.timeOfDay] ?: 0 }
                         .thenBy { it.second.id })
-                    // 依照天数(diff)分组，这样每组里最后一个就是当天的“最终记录”
                     .groupBy { it.first }
                     .forEach { (diff, dayPairs) ->
-                        // 拿到符合你要求（最迟时段、最新id）的最后一条数据
                         val finalRecord = dayPairs.last().second
                         entries.add(Entry(diff.toFloat(), calculateVal(finalRecord, isBmi)))
                     }

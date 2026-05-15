@@ -17,20 +17,20 @@
             android:layout_width="73dp"
             android:layout_height="53dp"
             android:layout_marginStart="32dp"
-            android:layout_marginTop="341dp"
             android:src="@drawable/icon_splash_logo"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/iconSplashTraining"
+            app:layout_constraintVertical_chainStyle="packed" />
         <ImageView
             android:id="@+id/iconBmiPointer"
             android:layout_width="8dp"
             android:layout_height="23dp"
-            android:layout_marginStart="64.5dp"
-            android:layout_marginTop="358.5dp"
             android:src="@drawable/icon_bmi_pointer"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_marginStart="32.5dp"
+            android:layout_marginTop="17.5dp"
+            app:layout_constraintStart_toStartOf="@id/iconSplashLogo"
+            app:layout_constraintTop_toTopOf="@id/iconSplashLogo" />
 
         <ImageView
             android:id="@+id/iconSplashTraining"
@@ -39,7 +39,9 @@
             android:layout_marginTop="6dp"
             android:src="@drawable/icon_splash_training"
             app:layout_constraintStart_toStartOf="@id/iconSplashLogo"
-            app:layout_constraintTop_toBottomOf="@id/iconSplashLogo" />
+            app:layout_constraintTop_toBottomOf="@id/iconSplashLogo"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
         <ImageView
             android:src="@drawable/icon_splash_leap"
             android:layout_width="0dp"

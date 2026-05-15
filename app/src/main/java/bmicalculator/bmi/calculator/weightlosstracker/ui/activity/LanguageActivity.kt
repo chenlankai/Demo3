@@ -51,17 +51,6 @@ class LanguageActivity : BaseActivity() {
         "Español" to "es",
         "Italiano" to "it",
         "한국어" to "ko",
-        /*"English" to "en",
-        "Português" to "pt",
-        "Русский" to "ru",
-        "Português" to "pt",
-        "Deutsch" to "de",
-        "繁體中文" to "zh-TW",
-        "简体中文" to "zh-CN",
-        "Français" to "fr",
-        "Español" to "es",
-        "Italiano" to "it",
-        "한국어" to "ko"*/
     )
     private var currentLangCode = "en"
 

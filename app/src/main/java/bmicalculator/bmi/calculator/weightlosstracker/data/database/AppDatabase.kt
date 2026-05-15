@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.data.dao.BmiDao
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 
-@Database(entities = [BmiRecord::class], version = 2, exportSchema = false)
+@Database(entities = [BmiRecord::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun bmiDao(): BmiDao
 

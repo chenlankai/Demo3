@@ -4,10 +4,12 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import bmicalculator.bmi.calculator.weightlosstracker.util.LocaleUtils
 import bmicalculator.bmi.calculator.weightlosstracker.R
@@ -16,6 +18,13 @@ abstract class BaseActivity : AppCompatActivity() {
     override fun attachBaseContext(newBase: Context) {
 
         super.attachBaseContext(LocaleUtils.applyLocale(newBase))
+
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
     }
     companion object {
         private var pendingToast: Triple<String, Int, String>? = null

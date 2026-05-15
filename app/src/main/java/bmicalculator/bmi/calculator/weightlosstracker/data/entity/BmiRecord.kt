@@ -14,8 +14,9 @@ data class BmiRecord(
     val heightIn: Int? = null,       // 身高单位为 ft-in 时的英寸
     val heightUnit: String,          // "cm" 或 "ft+in"
     val date: String,                // 格式如 "YYYY-MM-DD"
-    val timeOfDay: String,           // "Morning", "Afternoon", "Evening" 等
+    val timeOfDay: String,           // "Morning", "Afternoon", "Evening" "Night"
     val age: Int,
     val gender: String,              // "Male" 或 "Female"
-    val bmi: Float                   // BMI 数值
+    val bmi: Float,                  // BMI 数值
+    val timestamp: Long = System.currentTimeMillis() // 真实创建时间
 )
