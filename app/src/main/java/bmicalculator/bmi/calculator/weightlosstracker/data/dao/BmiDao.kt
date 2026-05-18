@@ -12,7 +12,7 @@ interface BmiDao {
 
     @Query("""
         SELECT * FROM bmi_records 
-        ORDER BY date DESC, 
+        ORDER BY CAST(date AS DATE) DESC, 
         CASE timeOfDay 
             WHEN 'Night' THEN 4 
             WHEN 'Evening' THEN 3 
@@ -26,7 +26,7 @@ interface BmiDao {
 
     @Query("""
         SELECT * FROM bmi_records 
-        ORDER BY date DESC, 
+        ORDER BY CAST(date AS DATE) DESC, 
         CASE timeOfDay 
             WHEN 'Night' THEN 4 
             WHEN 'Evening' THEN 3 
@@ -41,7 +41,7 @@ interface BmiDao {
 
     @Query("""
         SELECT * FROM bmi_records 
-        ORDER BY date DESC, 
+        ORDER BY CAST(date AS DATE) DESC, 
         CASE timeOfDay 
             WHEN 'Night' THEN 4 
             WHEN 'Evening' THEN 3 
