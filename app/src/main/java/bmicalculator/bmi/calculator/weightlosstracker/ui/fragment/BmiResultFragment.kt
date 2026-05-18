@@ -41,6 +41,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.recyclerview.widget.RecyclerView
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.HistoryActivity
+import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.dialog.BmiInfoDialog
 import bmicalculator.bmi.calculator.weightlosstracker.ui.dialog.DeleteConfirmDialog
 import bmicalculator.bmi.calculator.weightlosstracker.ui.widget.BmiGaugeView
@@ -389,17 +390,23 @@ class BmiResultFragment : Fragment() {
         }
     }
 
-    private fun showDeleteConfirmDialog() {
-        // 实例化弹窗，并在闭包中处理具体的删除后逻辑
+    private fun showDeleteConfirmDialog() {// 实例化弹窗，并在闭包中处理具体的删除后逻辑
         DeleteConfirmDialog(requireContext()) {
             val state = viewModel.uiState.value
 
             viewModel.deleteRecord(state?.recordId ?: -1L) { hasRemaining ->
+
+                BaseActivity.requestToastOnBack(
+                    getString(R.string.delete_successfully),
+                    R.drawable.check_circle,
+                    "#32CD32"
+                )
+
                 if (hasRemaining) {
-                    // 1. 还有记录，正常回到上一级页面（如历史记录列表）
+                    //还有记录，正常回到上一级页面（如历史记录列表）
                     requireActivity().finish()
                 } else {
-                    // 2. 最后一条记录被删除，清除草稿并进入初始输入页面
+                    //最后一条记录被删除，清除草稿并进入初始输入页面
                     requireContext().getSharedPreferences(getString(R.string.bmi_input_draft), Context.MODE_PRIVATE)
                         .edit().clear().apply()
 
