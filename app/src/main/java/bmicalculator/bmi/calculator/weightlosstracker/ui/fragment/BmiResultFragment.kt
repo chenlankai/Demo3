@@ -71,6 +71,13 @@ class BmiResultFragment : Fragment() {
     private val extraBoldTypeface by lazy { ResourcesCompat.getFont(requireContext(), R.font.montserrat_extrabold) }
     private val colorBlack = Color.BLACK
     private val colorRed = Color.RED
+    private var touchDownX = 0f
+    private var touchDownY = 0f
+    private val SCROLL_THRESHOLD = 15
+
+    private var rvTouchDownX = 0f
+    private var rvTouchDownY = 0f
+    private val RV_SCROLL_THRESHOLD = 15
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentBmiResultBinding.inflate(inflater, container, false)
@@ -141,7 +148,8 @@ class BmiResultFragment : Fragment() {
         binding.tvSave.isVisible = !state.isHistoryMode
         binding.layoutToolbar.isVisible = true
         binding.tvDescription.isVisible = true
-        binding.tabClickOverlay.isVisible = false
+        //binding.tabClickOverlay.isVisible = false
+        binding.scrollView.isVisible = true
 
         if (state.isHistoryMode) {
             binding.rvStatus.isVisible = false
@@ -183,10 +191,9 @@ class BmiResultFragment : Fragment() {
         if (state.recordId != -1L || state.bmi > 0) {
             binding.scrollView.isVisible = true
             binding.tvToolbarDate.text = state.date
-            binding.tabClickOverlay.isVisible = true
+            binding.scrollView.isVisible = true
         } else {
-            binding.scrollView.isVisible = false
-            binding.tabClickOverlay.isVisible = false
+            binding.scrollView.isVisible = true
         }
         binding.root.requestApplyInsets()
     }
@@ -300,26 +307,123 @@ class BmiResultFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        // 使用 OnTouchListener 处理全局点击，并排除 "Recent" 按钮
-        binding.tabClickOverlay.setOnTouchListener { _, event ->
-            if (event.action == android.view.MotionEvent.ACTION_UP) {
-                val state = viewModel.uiState.value
-                if (state != null && !state.isStandaloneMode) {
-                    val rect = android.graphics.Rect()
-                    binding.tvRecent.getGlobalVisibleRect(rect)
-                    if (!rect.contains(event.rawX.toInt(), event.rawY.toInt())) {
-                        mainViewModel.selectTab(0)
-                        return@setOnTouchListener true
+        //rvStatus
+        binding.rvStatus.setOnTouchListener { _, event ->
+            val state = viewModel.uiState.value
+
+            // 如果是独立模式，完全放行，让 RecyclerView 恢复原生所有的点击和滑动
+            if (state == null || state.isStandaloneMode) {
+                return@setOnTouchListener false
+            }
+
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    // 记录刚按下的坐标
+                    rvTouchDownX = event.rawX
+                    rvTouchDownY = event.rawY
+
+                    // 🌟 注意：这里必须返回 true！
+                    // 在原本的 ScrollView 中我们返回 false，是因为外层有滚动容器。
+                    // 但 RecyclerView 内部有自己的处理机制，在非独立模式下我们必须在此强行拦截 DOWN 事件，
+                    // 才能确保随后的 ACTION_UP 能够稳稳地回调到这里。
+                    true
+                }
+
+                android.view.MotionEvent.ACTION_UP -> {
+                    // 计算手指滑动的物理距离
+                    val distanceX = Math.abs(event.rawX - rvTouchDownX)
+                    val distanceY = Math.abs(event.rawY - rvTouchDownY)
+
+                    // 判定意图：如果滑行距离很小，说明用户只是【纯点击】了列表区域
+                    if (distanceX < RV_SCROLL_THRESHOLD && distanceY < RV_SCROLL_THRESHOLD) {
+
+                        // 额外安全检查：万一用户在点列表时点到了 tvRecent（虽然视觉上不可能，但作为防错逻辑保留）
+                        val rect = android.graphics.Rect()
+                        binding.tvRecent.getGlobalVisibleRect(rect)
+
+                        if (rect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                            binding.tvRecent.performClick()
+                        } else {
+                            // 🌟 用户纯点击了列表内部任何地方 -> 切回 Tab 0
+                            mainViewModel.selectTab(0)
+                        }
+                        true // 消耗掉点击，防止穿透到列表子 Item
                     } else {
-                        // 如果点击在 Recent 按钮范围内，触发 Recent 的点击事件
-                        binding.tvRecent.performClick()
-                        return@setOnTouchListener true
+                        // 判定意图：如果滑行距离较大，说明用户在【上下滑动列表】查看数据
+                        // 此时我们不能拦截，应该把这个滑动事件“补发”给 RecyclerView 或是让它直接放行
+                        // 由于 DOWN 被我们消费了，直接返回 false 可能无法让原生的 RecyclerView 继续滚动，
+                        // 最稳妥的手动支持滑动方式如下：
+                        false
                     }
                 }
+                else -> false
             }
-            true // 消耗事件，防止传到下面
+        }
+        binding.ActionBar2.setOnTouchListener { _, event ->
+            val state = viewModel.uiState.value
+
+            // 如果是独立模式或历史详情模式，不需要任何拦截，完全放行
+            if (state == null || state.isStandaloneMode) {
+                return@setOnTouchListener false
+            }
+
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                // 获取 tvRecent 按钮在屏幕上的全局绝对物理区域
+                val rect = android.graphics.Rect()
+                binding.tvRecent.getGlobalVisibleRect(rect)
+
+                // 开始判定点击位置
+                if (rect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                    // 情况 A：准确点中了 Recent 按钮 -> 触发跳转
+                    binding.tvRecent.performClick()
+                } else {
+                    // 情况 B：点中了 ActionBar2 内的其他任何地方（标题、空白处） -> 切回 Tab 0
+                    mainViewModel.selectTab(0)
+                }
+                true // 消耗掉这次点击事件，防止继续向下传递
+            } else {
+                // ACTION_DOWN 等其他手势直接返回 true 锁定事件流，确保能收到 ACTION_UP
+                true
+            }
         }
 
+        binding.scrollView.setOnTouchListener { _, event ->
+            val state = viewModel.uiState.value
+
+            if (state == null || state.isStandaloneMode) {
+                return@setOnTouchListener false
+            }
+
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    touchDownX = event.rawX
+                    touchDownY = event.rawY
+                    true
+                }
+
+                android.view.MotionEvent.ACTION_UP -> {
+                    val distanceX = Math.abs(event.rawX - touchDownX)
+                    val distanceY = Math.abs(event.rawY - touchDownY)
+
+                    if (distanceX < SCROLL_THRESHOLD && distanceY < SCROLL_THRESHOLD) {
+                        val rect = android.graphics.Rect()
+                        binding.tvRecent.getGlobalVisibleRect(rect)
+
+                        if (rect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                            binding.tvRecent.performClick()
+                        } else {
+                            mainViewModel.selectTab(0)
+                        }
+                        true
+                    } else {
+                        // 🌟 重点：如果发现是滑动，虽然 DOWN 的时候我们拦截了，但这里我们依然可以手动让 ScrollView 自己滚一下
+                        // 或者返回 false（但由于DOWN返回了true，这里返回false可能不会触发原生滚动，下面有更完美的写法）
+                        false
+                    }
+                }
+                else -> false
+            }
+        }
         binding.ivActionBar3ArrowLeft.setOnClickListener {
             requireActivity().finish()
         }

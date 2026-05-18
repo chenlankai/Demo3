@@ -5,7 +5,8 @@ import android.content.res.Resources
 import android.util.AttributeSet
 import android.view.View
 
-class ImmersiveView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
+class
+ImmersiveView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     companion object {
         var statusBarHeight = -1
     }

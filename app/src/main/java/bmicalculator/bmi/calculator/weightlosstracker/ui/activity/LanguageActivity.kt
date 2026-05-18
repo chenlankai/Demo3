@@ -22,18 +22,20 @@ import kotlinx.coroutines.launch
 class LanguageActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLanguageBinding
-    private val languages = listOf(
-        getString(R.string.english) to "en",
-        getString(R.string.portugu_s) to "pt",
-        getString(R.string.languaes_ru) to "ru",
-        getString(R.string.languaes_de) to "de",
-        getString(R.string.languaes_tw) to "zh-TW",
-        getString(R.string.languaes_cn) to "zh-CN",
-        getString(R.string.languaes_fr) to "fr",
-        getString(R.string.languaes_es) to "es",
-        getString(R.string.languaes_it) to "it",
-        getString(R.string.languaes_ko) to "ko",
-    )
+    private val languages by lazy {
+        listOf(
+            getString(R.string.english) to "en",
+            getString(R.string.portugu_s) to "pt",
+            getString(R.string.languaes_ru) to "ru",
+            getString(R.string.languaes_de) to "de",
+            getString(R.string.languaes_tw) to "zh-TW",
+            getString(R.string.languaes_cn) to "zh-CN",
+            getString(R.string.languaes_fr) to "fr",
+            getString(R.string.languaes_es) to "es",
+            getString(R.string.languaes_it) to "it",
+            getString(R.string.languaes_ko) to "ko"
+        )
+    }
     private var currentLangCode = "en"
 
     override fun onCreate(savedInstanceState: Bundle?) {

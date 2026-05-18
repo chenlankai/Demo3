@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDeleteConfirmBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseDialog
 
@@ -20,6 +21,10 @@ class DeleteConfirmDialog(
 
     override fun initView(savedInstanceState: Bundle?) {
         // 取消按钮：直接关闭弹窗
+        binding.tvTitle.text = context.getString(R.string.delete_conf)
+        binding.areYouSur.text = context.getString(R.string.are_you_sur)
+        binding.cancelButton.text = context.getString(R.string.cancel)
+        binding.deleteButton.text = context.getString(R.string.delete)
         binding.cancelButton.setOnClickListener {
             dismiss()
         }
