@@ -28,6 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.data.entity.BmiRecord
 import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+import bmicalculator.bmi.calculator.weightlosstracker.ui.dialog.GoogleAccountDialog
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -39,8 +40,9 @@ class MeActivity : BaseActivity() {
     private var isLoggedIn = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+
         binding = ActivityMeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -49,7 +51,7 @@ class MeActivity : BaseActivity() {
             v.updatePadding(top = systemBars.top)
             insets
         }
-        binding.ivRefresh.setOnClickListener { 
+        binding.ivRefresh.setOnClickListener {
             showSyncIssueDialog()
         }
 
@@ -72,7 +74,7 @@ class MeActivity : BaseActivity() {
                 startActivity(it)
             }
         }
-        
+
     }
 
     private fun showSyncIssueDialog() {
@@ -137,7 +139,7 @@ class MeActivity : BaseActivity() {
 
             // 3. 生成最近 2 年的数据 (每月两条)
             val monthCalendar = Calendar.getInstance()
-            val totalMonths = 24 
+            val totalMonths = 24
             for (i in 1..totalMonths) {
                 monthCalendar.add(Calendar.MONTH, -1)
                 weightOffset += 1.5f
@@ -173,26 +175,16 @@ class MeActivity : BaseActivity() {
     }
 
     private fun showGoogleAccountDialog() {
-        val dialogBinding = ViewGoogleAccountDialogBinding.inflate(layoutInflater)
-        val dialog = BottomSheetDialog(this, R.style.TransparentBottomSheetDialogTheme)
-        dialog.setContentView(dialogBinding.root)
+        GoogleAccountDialog(this, isLoggedIn) { willLogIn ->
+            // 1. 更新本地的状态标记
+            isLoggedIn = willLogIn
 
-        // 1. 初始化对话框 UI 状态
-        if (isLoggedIn) {
-            dialogBinding.btnLog.text = "Log out"
-            dialogBinding.btnLog.setTextColor(Color.parseColor("#F4333C"))
-        } else {
-            dialogBinding.btnLog.text = "Log in"
-            dialogBinding.btnLog.setTextColor(Color.BLACK)
-        }
-
-        dialogBinding.btnClose.setOnClickListener { dialog.dismiss() }
-        dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
-
-        dialogBinding.btnLog.setOnClickListener {
-            isLoggedIn = !isLoggedIn
+            // 2. 控制主页头像的可见性
             binding.ivAvatar.isVisible = isLoggedIn
+            binding.btnPrivacy.isVisible = !isLoggedIn
+            binding.div4.isVisible = !isLoggedIn
 
+            // 3. 根据状态，准备 Toast 的内容
             val statusMessage: String
             val iconRes: Int
             val colorStr: String
@@ -209,26 +201,7 @@ class MeActivity : BaseActivity() {
 
             showStatusToast(statusMessage, iconRes, colorStr)
 
-            dialog.dismiss()
-        }
-
-        dialog.behavior.isDraggable = false
-        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        dialog.show()
-    }
-
-    private fun updateLoginStateUI(dialog: BottomSheetDialog, dialogBinding: ViewGoogleAccountDialogBinding) {
-        binding.ivAvatar.isVisible = isLoggedIn
-        if (isLoggedIn) {
-            dialogBinding.btnLog.text = "Log out"
-            dialogBinding.btnLog.setTextColor(Color.parseColor("#F4333C"))
-            showStatusToast("Logged in successfully", R.drawable.login, "#4CAF50")
-        } else {
-            dialogBinding.btnLog.text = "Log in"
-            dialogBinding.btnLog.setTextColor(Color.BLACK)
-            showStatusToast("Logged out", R.drawable.logout, "#2196F3")
-        }
-        dialog.dismiss()
+        }.show()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {

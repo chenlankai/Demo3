@@ -8,6 +8,7 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -25,7 +26,21 @@ class FeedbackActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            // 1. 设置状态栏样式：这里设为全透明（Color.TRANSPARENT）
+            // SystemBarStyle.light(亮色模式，意味着图标会自动变成深色)
+            statusBarStyle = SystemBarStyle.light(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            ),
+
+            // 2. 设置底部导航栏样式：直接指定背景色为 #EAEAEE
+            // SystemBarStyle.light 会自动检测并强制把底部的三键客图标变成【深色/黑色】
+            navigationBarStyle = SystemBarStyle.light(
+                Color.parseColor("#EAEAEE"),
+                Color.parseColor("#EAEAEE")
+            )
+        )
         binding = ActivityFeedbackBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
@@ -56,7 +71,7 @@ class FeedbackActivity : BaseActivity() {
 
                 val fullMessage = getString(R.string.toast_feedback_text, userFeedback)
 
-                BaseActivity.requestToastOnBack(
+                requestToastOnBack(
                     fullMessage,
                     R.drawable.check_circle,
                     "#32CD32"

@@ -2,7 +2,9 @@ package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -70,7 +72,16 @@ class BmiResultActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_common_container)
 
-        val container = findViewById<android.view.View>(R.id.fragment_container)
+        val container = findViewById<View>(R.id.fragment_container)
+        window.navigationBarColor = Color.TRANSPARENT
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
+
+        // ✨ 确保容器背景色是你需要的灰色（你也可以直接去 XML 里的 fragment_container 设置 background）
+        container.setBackgroundColor(Color.parseColor("#FFFFFF"))
+
         ViewCompat.setOnApplyWindowInsetsListener(container) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(left = systemBars.left, right = systemBars.right, bottom = systemBars.bottom)

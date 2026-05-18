@@ -30,11 +30,15 @@ import android.view.inputmethod.EditorInfo
 import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
+import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDatePickerBinding
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.FragmentDataInputBinding
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogTimePickerBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.BmiResultActivity
+import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MeActivity
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.AgeAdapter
 import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
+import bmicalculator.bmi.calculator.weightlosstracker.ui.dialog.DatePickerDialog
+import bmicalculator.bmi.calculator.weightlosstracker.ui.dialog.TimePickerDialog
 import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.DataInputViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.util.dpToPx
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -414,7 +418,7 @@ class DataInputFragment : Fragment() {
 
     private fun setupListeners() {
         binding.ivTitleIcon.setOnClickListener {
-            startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.MeActivity::class.java))
+            startActivity(Intent(requireContext(), MeActivity::class.java))
         }
         binding.tvData.setOnClickListener { showDatePickerDialog() }
         binding.tvAfternoon.setOnClickListener { showTimePickerDialog() }
@@ -488,91 +492,27 @@ class DataInputFragment : Fragment() {
     }
 
     private fun showDatePickerDialog() {
-        val dialog = BottomSheetDialog(requireContext())
-        dialog.behavior.isDraggable = false
-        val dialogBinding = bmicalculator.bmi.calculator.weightlosstracker.databinding.DialogDatePickerBinding.inflate(layoutInflater)
-        dialog.setContentView(dialogBinding.root)
-
-        dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            bottomSheet?.let { it.setBackgroundColor(Color.WHITE) }
-        }
-
-        val calendar = Calendar.getInstance()
-        val today = Calendar.getInstance()
-
-        val currentText = viewModel.selectedDate.value ?: ""
-        val parts = currentText.replace(",", "").split(" ")
-        if (parts.size >= 3) {
-            val mIdx = allMonths.indexOf(parts[0])
-            if (mIdx != -1) calendar.set(Calendar.MONTH, mIdx)
-            calendar.set(Calendar.DAY_OF_MONTH, parts[1].toIntOrNull() ?: 1)
-            calendar.set(Calendar.YEAR, parts[2].toIntOrNull() ?: today.get(Calendar.YEAR))
-        }
-
-        val currentYear = today.get(Calendar.YEAR)
-        val years = (1900..currentYear).map { it.toString() }
-        dialogBinding.yearPicker.setData(years, (calendar.get(Calendar.YEAR) - 1900).coerceIn(0, years.size - 1))
-
-        fun updatePickers(isInitial: Boolean = false) {
-            val selectedYear = 1900 + dialogBinding.yearPicker.selectedPosition
-            val monthsLimit = if (selectedYear == currentYear) today.get(Calendar.MONTH) + 1 else 12
-            val monthsToShow = allMonths.take(monthsLimit)
-            val initialMonth = if (isInitial) calendar.get(Calendar.MONTH) else dialogBinding.monthPicker.selectedPosition
-            dialogBinding.monthPicker.setData(monthsToShow, initialMonth.coerceIn(0, monthsToShow.size - 1))
-
-            val selectedMonth = dialogBinding.monthPicker.selectedPosition
-            val cal = Calendar.getInstance()
-            cal.set(Calendar.YEAR, selectedYear)
-            cal.set(Calendar.MONTH, selectedMonth)
-            val maxDaysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
-
-            val daysLimit = if (selectedYear == currentYear && selectedMonth == today.get(Calendar.MONTH)) {
-                today.get(Calendar.DAY_OF_MONTH)
-            } else {
-                maxDaysInMonth
+        DatePickerDialog(
+            context = requireContext(),
+            initialDateText = viewModel.selectedDate.value ?: "",
+            allMonths = allMonths,
+            onDateSelected = { selectedDate ->
+                viewModel.setDate(selectedDate)
             }
-
-            val days = (1..daysLimit).map { it.toString() }
-            val initialDay = if (isInitial) calendar.get(Calendar.DAY_OF_MONTH) - 1 else dialogBinding.dayPicker.selectedPosition
-            dialogBinding.dayPicker.setData(days, initialDay.coerceIn(0, days.size - 1))
-        }
-
-        updatePickers(true)
-        dialogBinding.yearPicker.onItemSelected = { updatePickers() }
-        dialogBinding.monthPicker.onItemSelected = { updatePickers() }
-        dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
-        dialogBinding.btnDone.setOnClickListener {
-            val year = 1900 + dialogBinding.yearPicker.selectedPosition
-            val monthIdx = dialogBinding.monthPicker.selectedPosition
-            val day = 1 + dialogBinding.dayPicker.selectedPosition
-            viewModel.setDate("${allMonths[monthIdx]} $day, $year")
-            dialog.dismiss()
-        }
-        dialog.show()
+        ).show()
     }
 
     private fun showTimePickerDialog() {
-        val dialog = BottomSheetDialog(requireContext())
-        dialog.behavior.isDraggable = false
-        val dialogBinding = DialogTimePickerBinding.inflate(layoutInflater)
-        dialog.setContentView(dialogBinding.root)
-        dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            bottomSheet?.let { it.setBackgroundColor(Color.WHITE) }
-        }
+        TimePickerDialog(
+            context = requireContext(),
+            currentKey = viewModel.selectedTime.value ?: "Morning",
+            timeKeys = timeKeys,
+            timeLabels = timeLabels,
+            onTimeSelected = { selectedKey ->
 
-        val currentKey = viewModel.selectedTime.value ?: "Morning"
-        val initialPosition = timeKeys.indexOf(currentKey).coerceAtLeast(0)
-        dialogBinding.timePicker.setData(timeLabels, initialPosition)
-
-        dialogBinding.btnCancel.setOnClickListener { dialog.dismiss() }
-        dialogBinding.btnDone.setOnClickListener {
-            val selectedKey = timeKeys[dialogBinding.timePicker.selectedPosition]
-            viewModel.setTime(selectedKey)
-            dialog.dismiss()
-        }
-        dialog.show()
+                viewModel.setTime(selectedKey)
+            }
+        ).show()
     }
 
 

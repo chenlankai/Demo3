@@ -1,6 +1,8 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -19,7 +21,6 @@ import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseActivity
 
 class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -36,7 +37,7 @@ class MainActivity : BaseActivity() {
         val adapter = MainPagerAdapter(this)
         viewPager.adapter = adapter
         viewPager.isUserInputEnabled = false
-        viewPager.offscreenPageLimit = 3
+
 
         val bmiDao = AppDatabase.getDatabase(this).bmiDao()
         val viewModel = ViewModelProvider(this, MainViewModel.Factory(bmiDao))[MainViewModel::class.java]

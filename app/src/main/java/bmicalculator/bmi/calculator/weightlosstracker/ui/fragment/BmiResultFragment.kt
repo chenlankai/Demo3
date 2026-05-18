@@ -9,6 +9,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.text.buildSpannedString
@@ -37,6 +38,14 @@ import bmicalculator.bmi.calculator.weightlosstracker.ui.viewmodel.MainViewModel
 import bmicalculator.bmi.calculator.weightlosstracker.util.CustomTypefaceSpan
 import java.util.*
 import androidx.activity.OnBackPressedCallback
+import androidx.recyclerview.widget.RecyclerView
+import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity
+import bmicalculator.bmi.calculator.weightlosstracker.ui.activity.HistoryActivity
+import bmicalculator.bmi.calculator.weightlosstracker.ui.dialog.BmiInfoDialog
+import bmicalculator.bmi.calculator.weightlosstracker.ui.dialog.DeleteConfirmDialog
+import bmicalculator.bmi.calculator.weightlosstracker.ui.widget.BmiGaugeView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class BmiResultFragment : Fragment() {
 
@@ -327,10 +336,10 @@ class BmiResultFragment : Fragment() {
         binding.tvRecent.setOnClickListener {
             val state = viewModel.uiState.value
             if (state?.hasDatabaseRecords == true) {
-                startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.HistoryActivity::class.java))
+                startActivity(Intent(requireContext(), HistoryActivity::class.java))
             } else {
 
-                startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity::class.java).apply {
+                startActivity(Intent(requireContext(), DataInputActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 })
                 requireActivity().finish()
@@ -351,42 +360,7 @@ class BmiResultFragment : Fragment() {
 
     private fun showBmiInfoDialog() {
         val state = viewModel.uiState.value ?: return
-        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext(), R.style.TransparentBottomSheetDialogTheme)
-        val view = layoutInflater.inflate(R.layout.dialog_bmi_info, null)
-        dialog.setContentView(view)
-        dialog.behavior.apply {
-            this.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-            this.skipCollapsed = true
-        }
-        // 设置弹窗中的数据
-        val gaugeView = view.findViewById<bmicalculator.bmi.calculator.weightlosstracker.ui.widget.BmiGaugeView>(R.id.bmiGauge)
-        val rvStatus = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvStatus)
-        val tvTip = view.findViewById<android.widget.TextView>(R.id.tv_bmi_tip)
-        val tvTipValue = view.findViewById<android.widget.TextView>(R.id.tv_bmi_tip_value)
-        val btnGotIt = view.findViewById<android.widget.TextView>(R.id.btn_got_it)
-
-        gaugeView.showPointer = false
-        gaugeView.updateConfig(state.gender, state.age)
-        gaugeView.setBmi(state.bmi, false)
-
-        val rangeAdapter = BmiRangeAdapter()
-        rvStatus.layoutManager = LinearLayoutManager(requireContext())
-        rvStatus.adapter = rangeAdapter
-        rangeAdapter.setData(state.sections, state.bmi)
-
-        val genderStr = if (state.gender == 0) getString(R.string.male) else getString(R.string.female)
-        tvTipValue.text = getString(R.string.bmi_teenager_info_tip, state.age.toString(), genderStr)
-
-        btnGotIt.setOnClickListener { dialog.dismiss() }
-
-        if (state.age > 20) {
-            tvTip.text = getString(R.string.bmi_adult_tip)
-            tvTipValue.visibility = View.GONE
-        } else {
-            tvTip.text = getString(R.string.bmi_teenager_tip)
-            tvTipValue.visibility = View.VISIBLE
-        }
-        dialog.show()
+        BmiInfoDialog(requireContext(), state).show()
     }
 
     private fun saveBmiRecord() {
@@ -416,38 +390,26 @@ class BmiResultFragment : Fragment() {
     }
 
     private fun showDeleteConfirmDialog() {
-        val dialogBinding = DialogDeleteConfirmBinding.inflate(layoutInflater)
-        val dialog = AlertDialog.Builder(requireContext()).setView(dialogBinding.root).create()
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialogBinding.cancelButton.setOnClickListener { dialog.dismiss() }
-        dialogBinding.deleteButton.setOnClickListener {
+        // 实例化弹窗，并在闭包中处理具体的删除后逻辑
+        DeleteConfirmDialog(requireContext()) {
             val state = viewModel.uiState.value
+
             viewModel.deleteRecord(state?.recordId ?: -1L) { hasRemaining ->
-                dialog.dismiss()
                 if (hasRemaining) {
-                    // 还有记录，正常回到上一级页面（如历史记录列表）
+                    // 1. 还有记录，正常回到上一级页面（如历史记录列表）
                     requireActivity().finish()
                 } else {
-                    // 最后一条记录被删除，清除草稿并进入初始输入页面 (DataInputActivity，填满屏幕)
+                    // 2. 最后一条记录被删除，清除草稿并进入初始输入页面
                     requireContext().getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
                         .edit().clear().apply()
 
-                    startActivity(Intent(requireContext(), bmicalculator.bmi.calculator.weightlosstracker.ui.activity.DataInputActivity::class.java).apply {
+                    startActivity(Intent(requireContext(), DataInputActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     })
                     requireActivity().finish()
                 }
             }
-        }
-        dialog.show()
-
-        dialog.window?.let { window ->
-            val marginPx = (37f * resources.displayMetrics.density * 2).toInt()
-            val lp = window.attributes
-            lp.width = resources.displayMetrics.widthPixels - marginPx
-            lp.gravity = Gravity.CENTER
-            window.attributes = lp
-        }
+        }.show()
     }
 
     override fun onResume() {

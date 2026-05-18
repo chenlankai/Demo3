@@ -1,8 +1,10 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.activity
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.ViewGroup
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -19,26 +21,6 @@ import kotlinx.coroutines.launch
 class LanguageActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLanguageBinding
-    /*private val languages = listOf(
-        "English" to "en",
-        "中文" to "zh",
-        "Español" to "es",
-        "Français" to "fr",
-        "Deutsch" to "de",
-        "日本語" to "ja",
-        "한국어" to "ko",
-        "Português" to "pt",
-        "Русский" to "ru",
-        "العربية" to "ar",
-        "Italiano" to "it",
-        "Türkçe" to "tr",
-        "Tiếng Việt" to "vi",
-        "ภาษาไทย" to "th",
-        "Polski" to "pl",
-        "Nederlands" to "nl",
-        "Bahasa Indonesia" to "in",
-        "فارسی" to "fa"
-    )*/
     private val languages = listOf(
         "English" to "en",
         "Português" to "pt",
@@ -56,7 +38,21 @@ class LanguageActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            // 1. 设置状态栏样式：这里设为全透明（Color.TRANSPARENT）
+            // SystemBarStyle.light(亮色模式，意味着图标会自动变成深色)
+            statusBarStyle = SystemBarStyle.light(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            ),
+
+            // 2. 【核心修改】设置底部导航栏样式：直接指定背景色为 #EAEAEE
+            // SystemBarStyle.light 会自动检测并强制把底部的三键客图标变成【深色/黑色】
+            navigationBarStyle = SystemBarStyle.light(
+                Color.parseColor("#EAEAEE"),
+                Color.parseColor("#EAEAEE")
+            )
+        )
         binding = ActivityLanguageBinding.inflate(layoutInflater)
         setContentView(binding.root)
         

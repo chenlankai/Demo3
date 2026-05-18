@@ -16,9 +16,9 @@
         <item name="colorControlActivated">#3659CF</item>
     </style>
 
-    <style name="TransparentBottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
+    <!--<style name="TransparentBottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/TransparentBottomSheetStyle</item>
-    </style>
+    </style>-->
 
     <style name="TransparentBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
         <item name="android:background">@android:color/transparent</item>
