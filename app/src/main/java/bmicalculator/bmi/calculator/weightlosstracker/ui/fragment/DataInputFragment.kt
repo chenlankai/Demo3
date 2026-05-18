@@ -155,16 +155,20 @@ class DataInputFragment : Fragment() {
 
         viewModel.weight.observe(viewLifecycleOwner) { value ->
             val unit = viewModel.weightUnit.value ?: "lb"
+            var displayValue = value
+            if (unit == "lb" && displayValue > 551f) {
+                displayValue = 551f
+            }
             if (unit == "lb") {
                 if (!binding.etWeight.isFocused) {
-                    val formatted = String.format(Locale.US, "%.2f", value)
+                    val formatted = String.format(Locale.US, "%.2f", displayValue)
                     if (binding.etWeight.text.toString() != formatted) {
                         binding.etWeight.setText(formatted)
                     }
                 }
             } else {
                 if (!binding.etWeightKg.isFocused) {
-                    val formatted = String.format(Locale.US, "%.2f", value)
+                    val formatted = String.format(Locale.US, "%.2f", displayValue)
                     if (binding.etWeightKg.text.toString() != formatted) {
                         binding.etWeightKg.setText(formatted)
                     }
@@ -197,7 +201,7 @@ class DataInputFragment : Fragment() {
             val index = timeKeys.indexOf(key).coerceAtLeast(0)
             binding.tvAfternoon.text = timeLabels[index]
         }
-        
+
         viewModel.weightUnit.observe(viewLifecycleOwner) { unit ->
             val checkId = if (unit == "lb") binding.btnLb.id else binding.btnKg.id
             if (binding.toggleWeight.checkedButtonId != checkId) {
@@ -205,9 +209,16 @@ class DataInputFragment : Fragment() {
             }
             updateWeightInputConfig(unit)
             updateToggleUI(binding.toggleWeight, checkId)
-            
+
             // 当单位切换时，强制更新 EditText 里的值
-            val currentWeight = viewModel.weight.value ?: 0f
+            var currentWeight = viewModel.weight.value ?: 0f
+
+            // 🌟 核心修复：在单位切换事件回显中，如果是 lb 且超重，强制限制并纠正
+            if (unit == "lb" && currentWeight > 551f) {
+                currentWeight = 551f
+                viewModel.setWeight(551f) // 同时也把 ViewModel 里的脏数据纠正过来
+            }
+
             val formatted = String.format(Locale.US, "%.2f", currentWeight)
             if (unit == "lb") {
                 binding.etWeight.setText(formatted)
