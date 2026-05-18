@@ -87,7 +87,7 @@ class MeActivity : BaseActivity() {
 
         lifecycleScope.launch {
             val bmiDao = AppDatabase.getDatabase(this@MeActivity).bmiDao()
-            val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
+            val dateFormat = SimpleDateFormat(getString(R.string.mmm_dd_yyyy), Locale.ENGLISH)
             val fakeRecords = mutableListOf<BmiRecord>()
 
             val baseWeight = 65f
@@ -104,9 +104,9 @@ class MeActivity : BaseActivity() {
                         weight = currentWeight,
                         weightUnit = "kg",
                         heightCm = 175f,
-                        heightUnit = "cm",
+                        heightUnit =  "cm",
                         date = dateFormat.format(dayCalendar.time),
-                        timeOfDay = if (i % 2 == 0) "Morning" else "Afternoon",
+                        timeOfDay  = "Morning",
                         age = 25,
                         gender = "Male",
                         bmi = currentWeight / (1.75f * 1.75f),
@@ -190,11 +190,11 @@ class MeActivity : BaseActivity() {
             val colorStr: String
 
             if (isLoggedIn) {
-                statusMessage = "Logged in successfully"
+                statusMessage = getString(R.string.logged_in_successfully)
                 iconRes = R.drawable.login
                 colorStr = "#4CAF50"
             } else {
-                statusMessage = "Logged out successfully"
+                statusMessage = getString(R.string.logged_out_successfully)
                 iconRes = R.drawable.logout
                 colorStr = "#2196F3"
             }
@@ -209,7 +209,7 @@ class MeActivity : BaseActivity() {
         if (requestCode == 1001) {
             binding.ivAvatar.isVisible = isLoggedIn
             if (isLoggedIn) {
-                showStatusToast("Logged in successfully", R.drawable.login, "#4CAF50")
+                showStatusToast(getString(R.string.logged_in_successfully), R.drawable.login, "#4CAF50")
             }
         }
     }

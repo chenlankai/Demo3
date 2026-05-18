@@ -704,12 +704,21 @@ class DataInputFragment : Fragment() {
         val maxStr = if (max == max.toInt().toFloat()) max.toInt().toString() else String.format(Locale.US, "%.1f", max)
 
         val message = if (unit == "kg" || unit == "lb") {
-            "Please input a valid weight ($minStr - $maxStr $unit) to calculate your BMI accurately"
+            val rangeStr = "$minStr - $maxStr $unit"
+            getString(R.string.input_valid_weight_toast, rangeStr)
+
         } else if (unit == "ft/in") {
-            "Please input a valid Height (1'0\" - 8'2\") to calculate your BMI accurately"
+            // 2. 英制身高直接传入写死的英尺英寸范围
+            getString(R.string.input_valid_height_toast, "1'0\" - 8'2\"")
+
         } else {
-            val displayUnit = if (unit == "ft" || unit == "'") "ft" else if (unit == "in" || unit == "\"") "in" else "cm"
-            "Please input a valid Height ($minStr - $maxStr $displayUnit) to calculate your BMI accurately"
+            val displayUnit = when (unit) {
+                "ft", "'" -> "ft"
+                "in", "\"" -> "in"
+                else -> "cm"
+            }
+            val rangeStr = "$minStr - $maxStr $displayUnit"
+            getString(R.string.input_valid_height_toast, rangeStr)
         }
         (requireActivity() as? BaseActivity)?.showStatusToast(
             message,

@@ -10,6 +10,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
+import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.data.database.AppDatabase
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ActivityLanguageBinding
 import bmicalculator.bmi.calculator.weightlosstracker.ui.adapter.LanguageAdapter
@@ -22,17 +23,16 @@ class LanguageActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLanguageBinding
     private val languages = listOf(
-        "English" to "en",
-        "Português" to "pt",
-        "Русский" to "ru",
-        //"Português" to "pt",
-        "Deutsch" to "de",
-        "繁體中文" to "zh-TW",
-        "简体中文" to "zh-CN",
-        "Français" to "fr",
-        "Español" to "es",
-        "Italiano" to "it",
-        "한국어" to "ko",
+        getString(R.string.english) to "en",
+        getString(R.string.portugu_s) to "pt",
+        getString(R.string.languaes_ru) to "ru",
+        getString(R.string.languaes_de) to "de",
+        getString(R.string.languaes_tw) to "zh-TW",
+        getString(R.string.languaes_cn) to "zh-CN",
+        getString(R.string.languaes_fr) to "fr",
+        getString(R.string.languaes_es) to "es",
+        getString(R.string.languaes_it) to "it",
+        getString(R.string.languaes_ko) to "ko",
     )
     private var currentLangCode = "en"
 

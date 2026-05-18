@@ -3,7 +3,9 @@ package bmicalculator.bmi.calculator.weightlosstracker.ui.dialog
 
 import android.content.Context
 import android.graphics.Color
+import android.provider.Settings.Global.getString
 import android.view.LayoutInflater
+import bmicalculator.bmi.calculator.weightlosstracker.R
 import bmicalculator.bmi.calculator.weightlosstracker.ui.base.BaseBottomSheetDialog
 import bmicalculator.bmi.calculator.weightlosstracker.databinding.ViewGoogleAccountDialogBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -26,10 +28,10 @@ class GoogleAccountDialog(
 
         // 2. 初始化对话框 UI 状态
         if (isLoggedIn) {
-            binding.btnLog.text = "Log out"
+            binding.btnLog.text = context.getString(R.string.log_out)
             binding.btnLog.setTextColor(Color.parseColor("#F4333C"))
         } else {
-            binding.btnLog.text = "Log in"
+            binding.btnLog.text = context.getString(R.string.log_in)
             binding.btnLog.setTextColor(Color.BLACK)
         }
 

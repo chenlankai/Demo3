@@ -41,9 +41,12 @@ class BmiRangeAdapter : RecyclerView.Adapter<BmiRangeAdapter.ViewHolder>() {
             binding.tvLabel.text = context.getString(section.categoryResId)
 
             val rangeText = when {
-                section.minRange == null -> "< ${String.format(Locale.US, "%.1f", section.maxRange)}"
-                section.maxRange == null -> "≥ ${String.format(Locale.US, "%.1f", section.minRange)}"
-                else -> String.format(Locale.US, "%.1f- %.1f", section.minRange, section.maxRange - 0.1f)
+                section.minRange == null -> "< ${String.format(Locale.US,
+                    context.getString(R.string._1f), section.maxRange)}"
+                section.maxRange == null -> "≥ ${String.format(Locale.US, 
+                    context.getString(R.string._1f), section.minRange)}"
+                else -> String.format(Locale.US,
+                    context.getString(R.string._1f_1f), section.minRange, section.maxRange - 0.1f)
             }
             binding.tvRange.text = rangeText
 

@@ -269,26 +269,26 @@ class BmiResultFragment : Fragment() {
     private fun setupRecommendRecyclerView() {
         val recommendApps = listOf(
             RecommendAppAdapter.RecommendAppModel(
-                "Home Workout - No Equipments",
-                "Weight Loss, Lose Belly Fat",
+                getString(R.string.home_workout_no_equipments),
+                getString(R.string.weight_loss_lose_belly_fat),
                 R.drawable.icon_recommend_s5,
                 "4.8",
-                "homeworkout.homeworkouts.noequipment"
+                getString(R.string.homeworkout_homeworkouts_noequipment)
             ),
             RecommendAppAdapter.RecommendAppModel(
-                "Home Workout - No Equipments",
-                "Weight Loss, Lose Belly Fat",
+                getString(R.string.home_workout_no_equipments),
+                getString(R.string.weight_loss_lose_belly_fat),
                 R.drawable.icon_recommend_s5,
                 "4.8",
-                "homeworkout.homeworkouts.noequipment"
+                getString(R.string.homeworkout_homeworkouts_noequipment)
             ),
             RecommendAppAdapter.RecommendAppModel(
-                "Home Workout - No Equipments",
-                "Weight Loss, Lose Belly Fat",
+                getString(R.string.home_workout_no_equipments),
+                getString(R.string.weight_loss_lose_belly_fat),
                 R.drawable.icon_recommend_s5,
                 "4.8",
-                "homeworkout.homeworkouts.noequipment"
-            )
+                getString(R.string.homeworkout_homeworkouts_noequipment)
+            ),
         )
         recommendAdapter = RecommendAppAdapter(recommendApps)
         binding.rvRecommend.apply {
@@ -400,7 +400,7 @@ class BmiResultFragment : Fragment() {
                     requireActivity().finish()
                 } else {
                     // 2. 最后一条记录被删除，清除草稿并进入初始输入页面
-                    requireContext().getSharedPreferences("bmi_input_draft", Context.MODE_PRIVATE)
+                    requireContext().getSharedPreferences(getString(R.string.bmi_input_draft), Context.MODE_PRIVATE)
                         .edit().clear().apply()
 
                     startActivity(Intent(requireContext(), DataInputActivity::class.java).apply {

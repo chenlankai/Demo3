@@ -161,4 +161,24 @@
 	<string name="bmi_obese_class_i">Obese Class I</string>
 	<string name="bmi_obese_class_ii">Obese Class II</string>
 	<string name="bmi_obese_class_iii">Obese Class III</string>
+	<string name="logged_in_successfully">Logged in successfully</string>
+	<string name="logged_out_successfully">Logged out successfully</string>
+	<string name="kg">kg</string>
+	<string name="mmm_dd_yyyy">MMM dd, yyyy</string>
+	<string name="english">English</string>
+	<string name="portugu_s">Português</string>
+	<string name="languaes_ru">Русский</string>
+	<string name="languaes_de">Deutsch</string>
+	<string name="languaes_tw">繁體中文</string>
+	<string name="languaes_cn">简体中文</string>
+	<string name="languaes_fr">Français</string>
+	<string name="languaes_es">Español</string>
+	<string name="languaes_it">Italiano</string>
+	<string name="languaes_ko">한국어</string>
+	<string name="_1f">%.1f</string>
+	<string name="_1f_1f">%.1f- %.1f</string>
+	<string name="home_workout_no_equipments">Home Workout - No Equipments</string>
+	<string name="weight_loss_lose_belly_fat">Weight Loss, Lose Belly Fat</string>
+	<string name="homeworkout_homeworkouts_noequipment">homeworkout.homeworkouts.noequipment</string>
+    <string name="bmi_input_draft">bmi_input_draft</string>
 </resources>

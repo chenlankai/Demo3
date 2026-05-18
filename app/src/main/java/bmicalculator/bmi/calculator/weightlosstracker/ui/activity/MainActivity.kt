@@ -45,15 +45,6 @@ class MainActivity : BaseActivity() {
             viewPager.setCurrentItem(index, false)
         }
 
-        viewModel.bmiValue.observe(this) { bmi ->
-            // 这里可以处理观察到的 BMI 变化，例如记录日志或更新 UI
-            android.util.Log.d("MainActivity", "Observed BMI value: $bmi")
-        }
-
-        viewModel.bmiCategory.observe(this) { categoryResId ->
-            val category = getString(categoryResId)
-            android.util.Log.d("MainActivity", "Observed BMI category: $category")
-        }
 
         val selectTab = intent.getIntExtra("SELECT_TAB", 0)
         viewPager.setCurrentItem(selectTab, false)
@@ -62,17 +53,14 @@ class MainActivity : BaseActivity() {
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             when (position) {
                 0 -> {
-                    tab.text = "Calculator"
                     tab.setText(R.string.calculator)
                     tab.setIcon(R.drawable.icon_bbar_calculator)
                 }
                 1 -> {
-                    tab.text = "BMI"
                     tab.setText(R.string.bmi)
                     tab.setIcon(R.drawable.icon_bbar_bmi)
                 }
                 2 -> {
-                    tab.text = "Statistics"
                     tab.setText(R.string.statistics)
                     tab.setIcon(R.drawable.icon_bbar_statistic)
                 }
