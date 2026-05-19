@@ -1,5 +1,6 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.fragment
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -306,6 +307,7 @@ class BmiResultFragment : Fragment() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupListeners() {
         //rvStatus
         binding.rvStatus.setOnTouchListener { _, event ->

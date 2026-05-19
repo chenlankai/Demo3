@@ -1,5 +1,6 @@
 package bmicalculator.bmi.calculator.weightlosstracker.ui.fragment
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
@@ -72,6 +73,7 @@ class DataInputFragment : Fragment() {
         return binding.root
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
@@ -213,7 +215,7 @@ class DataInputFragment : Fragment() {
             // 当单位切换时，强制更新 EditText 里的值
             var currentWeight = viewModel.weight.value ?: 0f
 
-            // 🌟 核心修复：在单位切换事件回显中，如果是 lb 且超重，强制限制并纠正
+            //修复：在单位切换事件回显中，如果是 lb 且超重，强制限制并纠正
             if (unit == "lb" && currentWeight > 551f) {
                 currentWeight = 551f
                 viewModel.setWeight(551f) // 同时也把 ViewModel 里的脏数据纠正过来
@@ -356,7 +358,6 @@ class DataInputFragment : Fragment() {
     }
 
     private fun setupUnitToggles() {
-
 
 
         binding.toggleWeight.addOnButtonCheckedListener { _, checkedId, isChecked ->
@@ -527,6 +528,7 @@ class DataInputFragment : Fragment() {
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun EditText.setupValidation(
         unit: String,
         min: Float,

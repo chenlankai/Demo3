@@ -13,7 +13,7 @@ class DatePickerDialog(
     private val onDateSelected: (String) -> Unit
 ) : BaseBottomSheetDialog<DialogDatePickerBinding>(context) {
 
-    // ✨ 1. 只需要把自己的 Binding 给到基类即可
+    // 只需要把自己的 Binding 给到基类即可
     override fun inflateBinding(inflater: LayoutInflater): DialogDatePickerBinding {
         return DialogDatePickerBinding.inflate(inflater)
     }
